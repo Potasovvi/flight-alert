@@ -75,7 +75,7 @@ function extractTime(arr: unknown[] | undefined): string {
   return ''
 }
 
-function extractFlights(data: unknown): Flight[] {
+function extractFlights(data: unknown, departureDate?: string, returnDate?: string): Flight[] {
   const flights: Flight[] = []
 
   function scan(arr: unknown[]) {
@@ -98,8 +98,14 @@ function extractFlights(data: unknown): Flight[] {
           const date = Array.isArray(d) && typeof d[0] === 'number' && d[0] >= 2020
             ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : ''
 
-          const dateParam = date ? `+on+${date}` : ''
-          const url = `https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN${dateParam}&hl=en&gl=IT&curr=EUR`
+          const dep = departureDate || date || ''
+          const ret = returnDate || ''
+          const q = ret
+            ? `Flights+from+TRN+to+CTA+on+${dep}+return+on+${ret}`
+            : dep
+              ? `Flights+to+CTA+from+TRN+on+${dep}`
+              : 'Flights+to+CTA+from+TRN'
+          const url = `https://www.google.com/travel/flights?q=${q}&hl=en&gl=IT&curr=EUR`
 
           flights.push({
             airline,
@@ -125,8 +131,17 @@ function extractFlights(data: unknown): Flight[] {
   return flights
 }
 
-export async function scrapeGoogleFlights(): Promise<Flight[]> {
-  const url = 'https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN&hl=en&gl=IT&curr=EUR'
+export async function scrapeGoogleFlights(departureDate?: string, returnDate?: string): Promise<Flight[]> {
+  let query: string
+  if (departureDate && returnDate) {
+    query = `Flights+from+TRN+to+CTA+on+${departureDate}+return+on+${returnDate}`
+  } else if (departureDate) {
+    query = `Flights+to+CTA+from+TRN+on+${departureDate}`
+  } else {
+    query = 'Flights+to+CTA+from+TRN'
+  }
+
+  const url = `https://www.google.com/travel/flights?q=${query}&hl=en&gl=IT&curr=EUR`
 
   console.log(`Fetching ${url}`)
 
@@ -161,7 +176,7 @@ export async function scrapeGoogleFlights(): Promise<Flight[]> {
     return []
   }
 
-  const flights = extractFlights(parsed)
+  const flights = extractFlights(parsed, departureDate, returnDate)
   const unique = flights.filter((f, i, a) =>
     i === a.findIndex(x => x.airline === f.airline && x.price === f.price && x.departureTime === f.departureTime)
   )

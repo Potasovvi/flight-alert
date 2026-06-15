@@ -9,6 +9,15 @@ on:
     - cron: '0 13 * * *'
     - cron: '0 19 * * *'
   workflow_dispatch:
+    inputs:
+      departure_date:
+        description: 'Data andata (YYYY-MM-DD) — lascia vuoto per ricerca generica'
+        required: false
+        type: string
+      return_date:
+        description: 'Data ritorno (YYYY-MM-DD) — lascia vuoto per solo andata'
+        required: false
+        type: string
 
 jobs:
   scrape:
@@ -32,6 +41,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEPARTURE_DATE: ${{ inputs.departure_date || '' }}
+          RETURN_DATE: ${{ inputs.return_date || '' }}
 
       - name: Commit updated prices
         run: |
