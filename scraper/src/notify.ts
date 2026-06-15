@@ -80,7 +80,7 @@ export async function sendTelegramNotification(
     lines.push('', '📊 Prezzi invariati rispetto al giorno precedente')
   }
 
-  lines.push('', '—', 'flight-alert')
+  lines.push('', '[🔗 Apri la web app](https://flight-alert-omega.vercel.app/)', '—', 'flight-alert')
 
   const message = lines.join('\n')
 
