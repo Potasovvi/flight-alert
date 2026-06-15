@@ -1,32 +1,41 @@
 # flight-alert
 
-Monitoraggio prezzi voli **Torino → Catania**. Scraping Google Flights 3x/giorno (6, 15, 21 IT) con Playwright. Notifiche Telegram quando 3 tratte calano di prezzo. Dashboard React.
+Monitoraggio prezzi voli **Torino → Catania**. Scraping Google Flights 3x/giorno. Notifiche Telegram quando 3+ tratte calano di prezzo. Dashboard React.
 
 ## Stack
 
-Playwright · GitHub Actions · React · Vite · Vercel · Telegram Bot
+HTTP fetch + JSON parsing embedded · GitHub Actions · React · Vite · Vercel · Telegram Bot
 
-## Struttura rapida
+## Struttura
 
 | Path | Cosa |
 |------|------|
-| `scraper/` | Playwright → Google Flights, confronto, notifica Telegram |
-| `src/` | Dashboard React (Vite) |
-| `api/prices.js` | Vercel serverless → serve `data/prices.json` |
-| `.github/workflows/scrape.yml` | Cron 6/15/21 ora IT, installa Chromium |
+| `scraper/` | HTTP fetch → estrae JSON embedded (`AF_initDataCallback`), confronto, notifica Telegram |
+| `src/` | Dashboard React (Vite) con tabella voli e link cliccabili |
+| `api/prices.js` | Vercel serverless — fetcha dati da GitHub raw (sempre fresh) |
+| `.github/workflows/scrape.yml` | Cron 3x/giorno + `workflow_dispatch` con date personalizzate |
+| `data/prices.json` | Storico snapshot (committato dal workflow) |
+| `plans/` | Plan delle feature |
+
+## Workflow con date
+
+Vai su **Actions** → **Run workflow** → inserisci `departure_date` e `return_date` (YYYY-MM-DD).
 
 ## Comandi
 
 ```sh
-npm run dev           # Vite frontend :5173
-npm run build         # Build produzione
-cd scraper && npm start  # Esecuzione scraper manuale
+npm run dev               # Vite frontend :5173
+npm run build             # Build produzione
+cd scraper && npm start   # Scraper manuale
+cd scraper && npm start:dry# Scraper senza notifiche Telegram
 ```
 
-## Setup secrets (GitHub → Settings → Secrets)
+## Secrets (GitHub → Settings → Secrets)
 
-- `TELEGRAM_BOT_TOKEN` — da @BotFather
-- `TELEGRAM_CHAT_ID` — chat ID del bot
+| Secret | Valore |
+|--------|--------|
+| `TELEGRAM_BOT_TOKEN` | Token da @BotFather |
+| `TELEGRAM_CHAT_ID` | Chat ID del bot |
 
 ## Vedi anche
 

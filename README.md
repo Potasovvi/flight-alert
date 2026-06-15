@@ -35,18 +35,28 @@ Vai su Settings → Secrets and variables → Actions:
 
 Collega il repo su [vercel.com](https://vercel.com) — si configura da solo con `vercel.json`.
 
+## Workflow con date personalizzate
+
+Puoi cercare voli per date specifiche direttamente da GitHub Actions:
+
+1. Vai su **Actions** → **Flight Alert Scraper** → **Run workflow**
+2. Inserisci `departure_date` (es. `2026-10-01`) e `return_date` (es. `2026-10-07`)
+3. Lo scraper cerca TRN→CTA per quelle date e salva i risultati
+
+I cron regolari (3x/giorno) restano invariati — cercano senza date specifiche.
+
 ## Comandi
 
 ```sh
 npm run dev                # Dev frontend :5173
 npm run build              # Build produzione
 cd scraper && npm start    # Scraper manuale (HTTP + JSON parsing)
-cd scraper && npm start:dry # Scraper senza inviare notifiche Telegram
+cd scraper && npm start:dry# Scraper senza inviare notifiche Telegram
 ```
 
 ## Dati
 
-Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automaticamente da GitHub Actions.
+Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automaticamente da GitHub Actions. La dashboard li legge da **GitHub raw** (sempre fresh, nessun redeploy necessario).
 
 ## Tech
 
