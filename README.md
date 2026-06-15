@@ -4,8 +4,8 @@ Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)** e ti avvisa via Te
 
 ## Come funziona
 
-1. **GitHub Actions** esegue Playwright 3 volte al giorno (6:00, 15:00, 21:00 ora italiana)
-2. **Playwright** apre Google Flights, cerca voli TRN→CTA per i prossimi 30 giorni
+1. **GitHub Actions** esegue lo scraper 3 volte al giorno (6:00, 15:00, 21:00 ora italiana)
+2. **HTTP fetch** scarica la pagina Google Flights ed estrae i dati JSON embedded (`AF_initDataCallback`)
 3. **Confronta** i prezzi con lo snapshot del giorno prima
 4. **Telegram** ti notifica se 3+ tratte sono più economiche
 5. **React dashboard** su Vercel mostra storico e offerte
@@ -38,10 +38,10 @@ Collega il repo su [vercel.com](https://vercel.com) — si configura da solo con
 ## Comandi
 
 ```sh
-npm run dev          # Dev frontend :5173
-npm run build        # Build produzione
-cd scraper && npm start   # Esecuzione scraper manuale
-npm run scrape:dry   # Scraper senza inviare notifiche
+npm run dev                # Dev frontend :5173
+npm run build              # Build produzione
+cd scraper && npm start    # Scraper manuale (HTTP + JSON parsing)
+cd scraper && npm start:dry # Scraper senza inviare notifiche Telegram
 ```
 
 ## Dati
@@ -50,7 +50,7 @@ Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automati
 
 ## Tech
 
-- **Scraper:** Playwright + TypeScript
+- **Scraper:** HTTP fetch + parsing JSON embedded (nessun browser)
 - **Frontend:** React + Vite + Recharts
 - **Hosting:** Vercel (static + serverless)
 - **Cron:** GitHub Actions (2000 min/mese gratis)
