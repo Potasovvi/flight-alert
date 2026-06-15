@@ -1,7 +1,6 @@
-import { chromium } from 'playwright'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = path.resolve(__dirname, '../../data')
@@ -27,212 +26,145 @@ export interface PriceHistory {
   snapshots: PriceSnapshot[]
 }
 
-function formatDate(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+function pad(n: number): string {
+  if (typeof n !== 'number') return '00'
+  return n.toString().padStart(2, '0')
 }
 
-function sleep(ms: number) {
-  return new Promise(r => setTimeout(r, ms))
+function extractDataBlock(html: string, key: string): string | null {
+  const marker = `AF_initDataCallback({key: '${key}'`
+  const start = html.indexOf(marker)
+  if (start === -1) return null
+
+  const dataPos = html.indexOf('data:', start + marker.length)
+  if (dataPos === -1) return null
+
+  let i = dataPos + 5
+  while (i < html.length && html[i] === ' ') i++
+
+  const first = html[i]
+  if (first !== '[' && first !== '{') return null
+
+  let depth = 0
+  let inStr = false
+  let esc = false
+  const begin = i
+
+  for (; i < html.length; i++) {
+    const ch = html[i]
+    if (esc) { esc = false; continue }
+    if (ch === '\\') { esc = true; continue }
+    if (ch === '"') { inStr = !inStr; continue }
+    if (inStr) continue
+    if (ch === first && depth === 0) { depth = 1; continue }
+    if (ch === '[' || ch === '{') depth++
+    if (ch === ']' || ch === '}') {
+      depth--
+      if (depth === 0) return html.substring(begin, i + 1)
+    }
+  }
+  return null
 }
 
-function extractPrice(text: string): number | null {
-  const cleaned = text.replace(/\./g, '').replace(/,/g, '.').trim()
-  const m = cleaned.match(/(\d+[\d.]*)/)
-  if (!m) return null
-  const val = parseFloat(m[1])
-  return isNaN(val) ? null : val
+function extractTime(arr: unknown[] | undefined): string {
+  if (!Array.isArray(arr)) return ''
+  const h = typeof arr[0] === 'number' ? arr[0] : -1
+  const m = typeof arr[1] === 'number' ? arr[1] : 0
+  if (h >= 0 && h < 24) return `${pad(h)}:${pad(m)}`
+  return ''
 }
 
-interface RawFlight {
-  airline: string
-  departure: string
-  arrival: string
-  duration: string
-  stops: number
-  price: number
-}
+function extractFlights(data: unknown): Flight[] {
+  const flights: Flight[] = []
 
-function parseGoogleApiResponse(text: string): RawFlight[] {
-  const results: RawFlight[] = []
-  const lines = text.split('\n')
+  function scan(arr: unknown[]) {
+    if (!Array.isArray(arr)) return
 
-  for (const line of lines) {
-    const parts = line.split('["')
-    for (let i = 0; i < parts.length; i++) {
-      const chunk = parts[i]
-      if (!chunk.includes('€') && !chunk.includes('EUR')) continue
+    if (arr.length === 11) {
+      const a0 = arr[0]
+      const a1 = arr[1]
 
-      const priceM = chunk.match(/(\d{1,3}(?:[.\s]?\d{3})*(?:,\d{2})?)\s*[€]/)
-      if (!priceM) continue
+      if (
+        Array.isArray(a0) && a0.length >= 9 &&
+        Array.isArray(a1) && Array.isArray(a1[0]) && a1[0][0] === null
+      ) {
+        const airlineArr = a0[1]
+        const airline = Array.isArray(airlineArr) && typeof airlineArr[0] === 'string' ? airlineArr[0] : ''
+        const price = a1[0]?.[1]
 
-      const price = extractPrice(priceM[1])
-      if (!price || price < 10 || price > 2000) continue
+        if (airline && typeof price === 'number' && price > 10 && price < 2000) {
+          const d = a0[4]
+          const date = Array.isArray(d) && typeof d[0] === 'number' && d[0] >= 2020
+            ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : ''
 
-      let airline = ''
-      const airlineM = chunk.match(/(Ryanair|ITA\s*Airways|Wizz\s*Air|Volotea|EasyJet|Aeroitalia|[A-Z][a-z]+\s*(?:Air|Airlines|Airways|Aviation)?)/)
-      if (airlineM) airline = airlineM[1].trim()
-
-      let departure = ''
-      let arrival = ''
-      const timeM = chunk.match(/(\d{1,2}[:.]\d{2})\s*(?:[-→])\s*(\d{1,2}[:.]\d{2})/)
-      if (timeM) {
-        departure = timeM[1].replace('.', ':')
-        arrival = timeM[2].replace('.', ':')
+          flights.push({
+            airline,
+            departureTime: extractTime(a0[5]),
+            arrivalTime: extractTime(a0[8]),
+            duration: '',
+            stops: 0,
+            price: Math.round(price),
+            currency: 'EUR',
+            date
+          })
+        }
       }
+    }
 
-      let stops = 0
-      if (chunk.match(/scalo|stop|via/i)) stops = 1
-      if (chunk.match(/2\s*scali|2\s*stop/i)) stops = 2
-
-      let duration = ''
-      const durM = chunk.match(/(\d{1,2})\s*h[.\s]*(\d{1,2})\s*m/)
-      if (durM) duration = `${durM[1]}h ${durM[2]}m`
-
-      results.push({ airline: airline || 'Sconosciuto', departure, arrival, duration, stops, price })
+    for (const el of arr) {
+      if (Array.isArray(el)) scan(el)
     }
   }
 
-  return results
+  scan(data)
+  return flights
 }
 
 export async function scrapeGoogleFlights(): Promise<Flight[]> {
-  const flights: Flight[] = []
-  const today = new Date()
-  const todayStr = formatDate(today)
+  const url = 'https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN&hl=en&gl=IT&curr=EUR'
 
-  const browser = await chromium.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-web-security',
-      '--disable-features=IsolateOrigins,site-per-process'
-    ]
-  })
+  console.log(`Fetching ${url}`)
 
-  const context = await browser.newContext({
-    locale: 'it-IT',
-    timezoneId: 'Europe/Rome',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-    viewport: { width: 1280, height: 900 },
-    colorScheme: 'light'
-  })
-
-  const page = await context.newPage()
-
-  let apiResponses: string[] = []
-
-  page.on('response', async (response) => {
-    const url = response.url()
-    if (url.includes('TravelFrontendService') || url.includes('batchexecute') || url.includes('travel.flights')) {
-      try {
-        const text = await response.text()
-        if (text.length < 50000 && (text.includes('€') || text.includes('EUR') || text.includes('PRICE'))) {
-          apiResponses.push(text)
-        }
-      } catch { }
-    }
-  })
-
+  let html = ''
   try {
-    const dates: string[] = []
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(today)
-      d.setDate(d.getDate() + i)
-      dates.push(formatDate(d))
-    }
-
-    const foundPrices = new Set<number>()
-
-    for (let day = 0; day < Math.min(14, dates.length); day++) {
-      const dateStr = dates[day]
-      const url = `https://www.google.com/travel/flights?q=Flights+from+TRN+to+CTA+on+${dateStr}`
-
-      console.log(`Searching: ${dateStr}`)
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { })
-      await sleep(4000)
-
-      try {
-        const acceptBtn = page.locator('button:has-text("Accetta"), button:has-text("Accept all"), [aria-label*="cookie"], [aria-label*="consent"]').first()
-        if (await acceptBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await acceptBtn.click()
-          await sleep(1000)
-        }
-      } catch { }
-
-      await sleep(2000)
-
-      const bodyText = await page.textContent('body').catch(() => '') ?? ''
-
-      const priceMatches = bodyText.matchAll(/(\d{1,3}(?:[.\s]?\d{3})*(?:,\d{2})?)\s*€/g)
-      for (const m of priceMatches) {
-        const price = extractPrice(m[1])
-        if (!price || price < 10 || price > 2000 || foundPrices.has(price)) continue
-        foundPrices.add(price)
-
-        let airline = 'Sconosciuto'
-        let departure = ''
-        let arrival = ''
-        let duration = ''
-        let stops = 0
-
-        const contextStart = Math.max(0, (m.index ?? 0) - 200)
-        const contextEnd = Math.min(bodyText.length, (m.index ?? 0) + 100)
-        const context = bodyText.slice(contextStart, contextEnd)
-
-        const airlineM = context.match(/(Ryanair|ITA\s*Airways|Wizz\s*[Aa]ir|WizzAir|Volotea|EasyJet|Aeroitalia)/)
-        if (airlineM) airline = airlineM[1].trim()
-
-        const timeM = context.match(/(\d{1,2}[:.]\d{2})\s*(?:[-→])\s*(\d{1,2}[:.]\d{2})/)
-        if (timeM) {
-          departure = timeM[1].replace('.', ':')
-          arrival = timeM[2].replace('.', ':')
-        }
-
-        const durM = context.match(/(\d{1,2})\s*h/)
-        if (durM) duration = `${durM[1]}h`
-
-        if (context.match(/scalo|stop/i)) stops = 1
-
-        flights.push({ airline, departureTime: departure, arrivalTime: arrival, duration, stops, price, currency: 'EUR', date: dateStr })
-        console.log(`  Found: ${airline} €${price} ${departure}→${arrival}`)
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8'
       }
-
-      await sleep(1000)
-    }
-
-    if (flights.length === 0 && apiResponses.length > 0) {
-      console.log('DOM extraction gave 0 results, trying API response parsing...')
-      for (const resp of apiResponses) {
-        const parsed = parseGoogleApiResponse(resp)
-        for (const f of parsed) {
-          if (!foundPrices.has(f.price)) {
-            foundPrices.add(f.price)
-            flights.push({ airline: f.airline, departureTime: f.departure, arrivalTime: f.arrival, duration: f.duration, stops: f.stops, price: f.price, currency: 'EUR', date: todayStr })
-          }
-        }
-      }
-    }
-
-    if (flights.length === 0) {
-      console.log('No flights found via text matching. Saving screenshot for debugging...')
-      try {
-        await page.screenshot({ path: '/tmp/flight-alert-debug.png', fullPage: true })
-        console.log('Screenshot saved to /tmp/flight-alert-debug.png')
-      } catch { }
-    }
+    })
+    html = await resp.text()
+    console.log(`Downloaded ${(html.length / 1024).toFixed(0)} KB`)
   } catch (e) {
-    console.error('Scraping error:', e)
-  } finally {
-    await browser.close()
+    console.error('Failed to fetch:', e)
+    return []
   }
 
-  flights.sort((a, b) => a.price - b.price)
-  const unique = flights.filter((f, i, arr) => arr.findIndex(x => x.airline === f.airline && x.price === f.price) === i)
+  const rawData = extractDataBlock(html, 'ds:1')
+  if (!rawData) {
+    console.error('Could not extract ds:1 data block from HTML')
+    return []
+  }
+  console.log(`Extracted ds:1 block (${rawData.length} chars)`)
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(rawData)
+  } catch (e) {
+    console.error('Failed to parse JSON:', e)
+    return []
+  }
+
+  const flights = extractFlights(parsed)
+  const unique = flights.filter((f, i, a) =>
+    i === a.findIndex(x => x.airline === f.airline && x.price === f.price && x.departureTime === f.departureTime)
+  )
+
+  unique.sort((a, b) => a.price - b.price)
+  console.log(`Found ${unique.length} flights`)
+  unique.forEach(f => console.log(`  ${f.airline}: €${f.price} ${f.date} ${f.departureTime}→${f.arrivalTime}`))
+
   return unique.slice(0, 20)
 }
 

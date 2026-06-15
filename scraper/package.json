@@ -8,7 +8,6 @@
     "start:dry": "DRY_RUN=true tsx src/index.ts"
   },
   "dependencies": {
-    "playwright": "^1.52.0",
     "tsx": "^4.19.0"
   },
   "devDependencies": {

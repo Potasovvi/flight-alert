@@ -2,10 +2,6 @@ name: Flight Alert Scraper
 
 on:
   schedule:
-    # Ora italiana (CET: UTC+1 / CEST: UTC+2)
-    # 6:00 IT = 5:00 CET / 4:00 CEST
-    # 15:00 IT = 14:00 CET / 13:00 CEST
-    # 21:00 IT = 20:00 CET / 19:00 CEST
     - cron: '0 5 * * *'
     - cron: '0 14 * * *'
     - cron: '0 20 * * *'
@@ -30,28 +26,12 @@ jobs:
         run: npm ci
         working-directory: scraper
 
-      - name: Install Chromium
-        run: npx playwright install chromium
-        working-directory: scraper
-
-      - name: Install system dependencies for Chromium
-        run: npx playwright install-deps chromium
-        working-directory: scraper
-
       - name: Run scraper
         run: npm start
         working-directory: scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
-      - name: Upload debug screenshot (if any)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-screenshot
-          path: /tmp/flight-alert-debug.png
-          if-no-files-found: ignore
 
       - name: Commit updated prices
         run: |
