@@ -7,6 +7,7 @@ export interface Flight {
   price: number
   currency: string
   date: string
+  url: string
 }
 
 export interface PriceSnapshot {

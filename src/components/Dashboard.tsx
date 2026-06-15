@@ -138,36 +138,46 @@ export function Dashboard() {
           📋 Ultimi rilevamenti
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[...data.snapshots].reverse().slice(0, 10).map((snap, i) => {
-            const date = new Date(snap.timestamp)
-            const formattedDate = date.toLocaleString('it-IT', {
-              timeZone: 'Europe/Rome',
-              day: '2-digit',
-              month: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-            return (
-              <div key={i} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '8px 12px',
-                background: '#f8fafc',
-                borderRadius: 8,
-                fontSize: 14
-              }}>
-                <span style={{ color: '#64748b' }}>{formattedDate}</span>
-                <span style={{ color: '#0f172a', fontWeight: 500 }}>
-                  {snap.flights.length} voli trovati
-                  {snap.flights.length > 0 && (
-                    <span style={{ color: '#94a3b8', fontWeight: 400 }}>
-                      {' '}— da €{Math.min(...snap.flights.map(f => f.price))}
-                    </span>
-                  )}
-                </span>
-              </div>
-            )
-          })}
+          {(() => {
+            const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+            const latest = sorted[0]
+            if (!latest) return null
+            const flights = [...latest.flights].sort((a, b) => a.price - b.price)
+            return flights.map((f, i) => (
+              <a key={i}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  background: i % 2 === 0 ? '#f8fafc' : '#fff',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  border: '1px solid #e2e8f0',
+                  transition: 'box-shadow 0.15s',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)'}
+                onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: '#0f172a', minWidth: 80 }}>{f.airline}</span>
+                  <span style={{ color: '#64748b' }}>
+                    {f.departureTime || '··'}→{f.arrivalTime || '··'}
+                  </span>
+                  {f.date && <span style={{ color: '#94a3b8', fontSize: 12 }}>{f.date}</span>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 16 }}>€{f.price}</span>
+                  <span style={{ color: '#94a3b8', fontSize: 11 }}>↗</span>
+                </div>
+              </a>
+            ))
+          })()}
         </div>
       </section>
 

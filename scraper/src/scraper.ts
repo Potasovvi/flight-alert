@@ -15,6 +15,7 @@ export interface Flight {
   price: number
   currency: string
   date: string
+  url: string
 }
 
 export interface PriceSnapshot {
@@ -97,6 +98,9 @@ function extractFlights(data: unknown): Flight[] {
           const date = Array.isArray(d) && typeof d[0] === 'number' && d[0] >= 2020
             ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : ''
 
+          const dateParam = date ? `+on+${date}` : ''
+          const url = `https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN${dateParam}&hl=en&gl=IT&curr=EUR`
+
           flights.push({
             airline,
             departureTime: extractTime(a0[5]),
@@ -105,7 +109,8 @@ function extractFlights(data: unknown): Flight[] {
             stops: 0,
             price: Math.round(price),
             currency: 'EUR',
-            date
+            date,
+            url
           })
         }
       }
