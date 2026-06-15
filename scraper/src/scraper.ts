@@ -16,6 +16,7 @@ export interface Flight {
   currency: string
   date: string
   url: string
+  route: string // TRN→CTA or CTA→TRN
 }
 
 export interface PriceSnapshot {
@@ -27,7 +28,7 @@ export interface PriceHistory {
   snapshots: PriceSnapshot[]
 }
 
-function pad(n: number): string {
+export function pad(n: number): string {
   if (typeof n !== 'number') return '00'
   return n.toString().padStart(2, '0')
 }
@@ -75,7 +76,7 @@ function extractTime(arr: unknown[] | undefined): string {
   return ''
 }
 
-function extractFlights(data: unknown, departureDate?: string, returnDate?: string): Flight[] {
+function extractFlights(data: unknown): Flight[] {
   const flights: Flight[] = []
 
   function scan(arr: unknown[]) {
@@ -98,15 +99,6 @@ function extractFlights(data: unknown, departureDate?: string, returnDate?: stri
           const date = Array.isArray(d) && typeof d[0] === 'number' && d[0] >= 2020
             ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : ''
 
-          const dep = departureDate || date || ''
-          const ret = returnDate || ''
-          const q = ret
-            ? `Flights+from+TRN+to+CTA+on+${dep}+return+on+${ret}`
-            : dep
-              ? `Flights+to+CTA+from+TRN+on+${dep}`
-              : 'Flights+to+CTA+from+TRN'
-          const url = `https://www.google.com/travel/flights?q=${q}&hl=en&gl=IT&curr=EUR`
-
           flights.push({
             airline,
             departureTime: extractTime(a0[5]),
@@ -116,7 +108,8 @@ function extractFlights(data: unknown, departureDate?: string, returnDate?: stri
             price: Math.round(price),
             currency: 'EUR',
             date,
-            url
+            url: '',
+            route: ''
           })
         }
       }
@@ -131,17 +124,12 @@ function extractFlights(data: unknown, departureDate?: string, returnDate?: stri
   return flights
 }
 
-export async function scrapeGoogleFlights(departureDate?: string, returnDate?: string): Promise<Flight[]> {
-  let query: string
-  if (departureDate && returnDate) {
-    query = `Flights+from+TRN+to+CTA+on+${departureDate}+return+on+${returnDate}`
-  } else if (departureDate) {
-    query = `Flights+to+CTA+from+TRN+on+${departureDate}`
-  } else {
-    query = 'Flights+to+CTA+from+TRN'
-  }
-
-  const url = `https://www.google.com/travel/flights?q=${query}&hl=en&gl=IT&curr=EUR`
+async function scrapeOneWay(origin: string, dest: string, date?: string): Promise<Flight[]> {
+  const route = `${origin}→${dest}`
+  const q = date
+    ? `Flights+to+${dest}+from+${origin}+on+${date}`
+    : `Flights+to+${dest}+from+${origin}`
+  const url = `https://www.google.com/travel/flights?q=${q}&hl=en&gl=IT&curr=EUR`
 
   console.log(`Fetching ${url}`)
 
@@ -176,16 +164,39 @@ export async function scrapeGoogleFlights(departureDate?: string, returnDate?: s
     return []
   }
 
-  const flights = extractFlights(parsed, departureDate, returnDate)
-  const unique = flights.filter((f, i, a) =>
-    i === a.findIndex(x => x.airline === f.airline && x.price === f.price && x.departureTime === f.departureTime)
+  const flights = extractFlights(parsed)
+  return flights.map(f => ({
+    ...f,
+    route,
+    url
+  }))
+}
+
+export async function scrapeGoogleFlights(departureDate?: string, returnDate?: string): Promise<Flight[]> {
+  const outbound = await scrapeOneWay('TRN', 'CTA', departureDate)
+  let returnFlights: Flight[] = []
+
+  if (departureDate && returnDate) {
+    returnFlights = await scrapeOneWay('CTA', 'TRN', returnDate)
+  }
+
+  const all = [...outbound, ...returnFlights]
+
+  const unique = all.filter((f, i, a) =>
+    i === a.findIndex(x =>
+      x.airline === f.airline &&
+      x.departureTime === f.departureTime &&
+      x.route === f.route
+    )
   )
 
   unique.sort((a, b) => a.price - b.price)
-  console.log(`Found ${unique.length} flights`)
-  unique.forEach(f => console.log(`  ${f.airline}: €${f.price} ${f.date} ${f.departureTime}→${f.arrivalTime}`))
+  console.log(`Found ${unique.length} flights (${outbound.length} outbound + ${returnFlights.length} return)`)
+  unique.forEach(f =>
+    console.log(`  [${f.route}] ${f.airline}: €${f.price} ${f.date} ${f.departureTime}→${f.arrivalTime}`)
+  )
 
-  return unique.slice(0, 20)
+  return unique.slice(0, 40)
 }
 
 export async function loadPriceHistory(): Promise<PriceHistory> {

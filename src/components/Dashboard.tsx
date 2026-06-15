@@ -170,50 +170,62 @@ export function Dashboard() {
           const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
           const latest = sorted[0]
           if (!latest) return null
-          const flights = [...latest.flights].sort((a, b) => a.price - b.price)
+
+          const outbound = [...latest.flights]
+            .filter(f => f.route === 'TRN→CTA')
+            .sort((a, b) => a.price - b.price)
+          const ret = [...latest.flights]
+            .filter(f => f.route === 'CTA→TRN')
+            .sort((a, b) => a.price - b.price)
+
+          function FlightTable({ title, flights, color }: { title: string; flights: Flight[]; color: string }) {
+            return (
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color }}>{title}</h3>
+                {flights.length === 0 ? (
+                  <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>Nessun volo disponibile</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, fontFamily: 'inherit' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                          <Th>Compagnia</Th>
+                          <Th>Data</Th>
+                          <Th>Partenza</Th>
+                          <Th>Arrivo</Th>
+                          <Th style={{ textAlign: 'right' }}>Prezzo</Th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {flights.map((f, i) => (
+                          <tr key={i}
+                            onClick={() => window.open(f.url, '_blank', 'noopener')}
+                            style={{ cursor: 'pointer', borderBottom: '1px solid #e2e8f0', transition: 'background 0.1s' }}
+                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                            <Td>{f.airline}</Td>
+                            <Td>{f.date || '—'}</Td>
+                            <Td>{f.departureTime || '—'}</Td>
+                            <Td>{f.arrivalTime || '—'}</Td>
+                            <Td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>€{f.price}</Td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
           return (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: 14,
-                fontFamily: 'inherit'
-              }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                    <Th>Compagnia</Th>
-                    <Th>Data</Th>
-                    <Th>Partenza</Th>
-                    <Th>Arrivo</Th>
-                    <Th style={{ textAlign: 'right' }}>Prezzo</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {flights.map((f, i) => (
-                    <tr key={i}
-                      onClick={() => window.open(f.url, '_blank', 'noopener')}
-                      style={{
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #e2e8f0',
-                        transition: 'background 0.1s'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                      <Td>{f.airline}</Td>
-                      <Td>{f.date || '—'}</Td>
-                      <Td>{f.departureTime || '—'}</Td>
-                      <Td>{f.arrivalTime || '—'}</Td>
-                      <Td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
-                        €{f.price}
-                      </Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 8, marginBottom: 0 }}>
+            <>
+              <FlightTable title="✈️ Andata — Torino → Catania" flights={outbound} color="#2563eb" />
+              <FlightTable title="🔄 Ritorno — Catania → Torino" flights={ret} color="#7c3aed" />
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 0, marginBottom: 0 }}>
                 Clicca su una riga per aprire la ricerca su Google Flights
               </p>
-            </div>
+            </>
           )
         })()}
       </section>
