@@ -210,19 +210,24 @@ export function Dashboard() {
           function SlotRow({ item, cheapest }: { item: { slot: { label: string }; best: Flight | null }; cheapest: number }) {
             const isCheapest = item.best && item.best.price === cheapest
             return (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '8px 12px',
-                marginBottom: 4,
-                borderRadius: 6,
-                background: isCheapest ? '#f0fdf4' : 'transparent',
-                border: isCheapest ? '1px solid #bbf7d0' : '1px solid transparent'
-              }}>
+              <div onClick={() => item.best && window.open(item.best.url, '_blank', 'noopener')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  marginBottom: 4,
+                  borderRadius: 6,
+                  cursor: item.best ? 'pointer' : 'default',
+                  background: isCheapest ? '#f0fdf4' : 'transparent',
+                  border: isCheapest ? '1px solid #bbf7d0' : '1px solid transparent',
+                  transition: 'background 0.1s'
+                }}
+                onMouseOver={e => { if (item.best) e.currentTarget.style.background = isCheapest ? '#dcfce7' : '#f1f5f9' }}
+                onMouseOut={e => { e.currentTarget.style.background = isCheapest ? '#f0fdf4' : 'transparent' }}>
                 <span style={{ fontSize: 14, color: '#334155' }}>{item.slot.label}</span>
                 {item.best ? (
-                  <span style={{ fontSize: 14, fontWeight: isCheapest ? 700 : 500, color: isCheapest ? '#16a34a' : '#334155' }}>
+                  <span style={{ fontSize: 14, fontWeight: isCheapest ? 700 : 500, color: isCheapest ? '#16a34a' : '#2563eb' }}>
                     {item.best.airline} €{item.best.price} ({item.best.departureTime})
                     {isCheapest && <span style={{ marginLeft: 8, fontSize: 11, background: '#16a34a', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>PIÙ ECONOMICO</span>}
                   </span>
