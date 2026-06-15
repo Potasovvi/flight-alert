@@ -1,6 +1,7 @@
 import { usePrices } from '../hooks/usePrices.js'
 import { DealCard } from './DealCard.js'
 import { PriceChart } from './PriceChart.js'
+import { DateSearchForm } from './DateSearchForm.js'
 import type { Flight } from '../types.js'
 
 interface Deal {
@@ -134,6 +135,8 @@ export function Dashboard() {
           </span>}
         </p>
       </header>
+
+      <DateSearchForm />
 
       <section style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
