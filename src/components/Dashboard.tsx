@@ -56,6 +56,35 @@ function getLatestUpdate(snapshots: { timestamp: string }[]): string {
   })
 }
 
+function Th({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <th style={{
+      padding: '10px 12px',
+      textAlign: 'left',
+      fontWeight: 600,
+      color: '#64748b',
+      fontSize: 13,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+      ...style
+    }}>
+      {children}
+    </th>
+  )
+}
+
+function Td({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <td style={{
+      padding: '10px 12px',
+      color: '#334155',
+      ...style
+    }}>
+      {children}
+    </td>
+  )
+}
+
 export function Dashboard() {
   const { data, loading, error } = usePrices()
 
@@ -137,48 +166,56 @@ export function Dashboard() {
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
           📋 Ultimi rilevamenti
         </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {(() => {
-            const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-            const latest = sorted[0]
-            if (!latest) return null
-            const flights = [...latest.flights].sort((a, b) => a.price - b.price)
-            return flights.map((f, i) => (
-              <a key={i}
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  background: i % 2 === 0 ? '#f8fafc' : '#fff',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  border: '1px solid #e2e8f0',
-                  transition: 'box-shadow 0.15s',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)'}
-                onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: '#0f172a', minWidth: 80 }}>{f.airline}</span>
-                  <span style={{ color: '#64748b' }}>
-                    {f.departureTime || '··'}→{f.arrivalTime || '··'}
-                  </span>
-                  {f.date && <span style={{ color: '#94a3b8', fontSize: 12 }}>{f.date}</span>}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 16 }}>€{f.price}</span>
-                  <span style={{ color: '#94a3b8', fontSize: 11 }}>↗</span>
-                </div>
-              </a>
-            ))
-          })()}
-        </div>
+        {(() => {
+          const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+          const latest = sorted[0]
+          if (!latest) return null
+          const flights = [...latest.flights].sort((a, b) => a.price - b.price)
+          return (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: 14,
+                fontFamily: 'inherit'
+              }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                    <Th>Compagnia</Th>
+                    <Th>Data</Th>
+                    <Th>Partenza</Th>
+                    <Th>Arrivo</Th>
+                    <Th style={{ textAlign: 'right' }}>Prezzo</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flights.map((f, i) => (
+                    <tr key={i}
+                      onClick={() => window.open(f.url, '_blank', 'noopener')}
+                      style={{
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #e2e8f0',
+                        transition: 'background 0.1s'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                      <Td>{f.airline}</Td>
+                      <Td>{f.date || '—'}</Td>
+                      <Td>{f.departureTime || '—'}</Td>
+                      <Td>{f.arrivalTime || '—'}</Td>
+                      <Td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
+                        €{f.price}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 8, marginBottom: 0 }}>
+                Clicca su una riga per aprire la ricerca su Google Flights
+              </p>
+            </div>
+          )
+        })()}
       </section>
 
       <footer style={{ marginTop: 48, padding: '16px 0', borderTop: '1px solid #e2e8f0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
