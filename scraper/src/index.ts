@@ -6,8 +6,10 @@ async function main() {
   console.log('=== Flight Alert Scraper ===')
   console.log(`Time: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}`)
 
-  const departureDate = process.env.DEPARTURE_DATE || undefined
-  const returnDate = process.env.RETURN_DATE || undefined
+  const FIXED_DEPARTURE = '2026-12-20'
+  const FIXED_RETURN = '2027-01-06'
+  const departureDate = process.env.DEPARTURE_DATE || FIXED_DEPARTURE
+  const returnDate = process.env.RETURN_DATE || FIXED_RETURN
 
   if (departureDate && !/^\d{4}-\d{2}-\d{2}$/.test(departureDate)) {
     console.error(`Invalid DEPARTURE_DATE format: ${departureDate} (expected YYYY-MM-DD)`)
@@ -22,13 +24,8 @@ async function main() {
     process.exit(1)
   }
 
-  if (departureDate && returnDate) {
-    console.log(`Search: ${departureDate} → ${returnDate} (round trip)`)
-  } else if (departureDate) {
-    console.log(`Search: ${departureDate} (one way)`)
-  } else {
-    console.log('Search: generic (no specific dates)')
-  }
+  const isDefault = departureDate === FIXED_DEPARTURE && returnDate === FIXED_RETURN
+  console.log(`Search: ${departureDate} → ${returnDate} (round trip)${isDefault ? ' [date fisse di default 20/12 → 6/1]' : ''}`)
 
   const flights = await scrapeGoogleFlights(departureDate, returnDate)
   console.log(`Scraped ${flights.length} flights`)

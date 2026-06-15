@@ -160,6 +160,103 @@ export function Dashboard() {
 
       <section style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
+          🌤️ Miglior fascia oraria
+        </h2>
+        <p style={{ fontSize: 13, color: '#64748b', margin: '-8px 0 16px' }}>
+          Date fisse di default: <strong>20 dicembre 2026</strong> (andata) → <strong>6 gennaio 2027</strong> (ritorno)
+        </p>
+        {(() => {
+          const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+          const latest = sorted[0]
+          if (!latest) return null
+
+          const slots = [
+            { id: 'mattina', label: '🌅 Mattina (6-12)', min: 6, max: 12 },
+            { id: 'pomeriggio', label: '☀️ Pomeriggio (12-18)', min: 12, max: 18 },
+            { id: 'sera', label: '🌙 Sera (18-24)', min: 18, max: 24 },
+          ] as const
+
+          function getHour(time: string): number {
+            const h = parseInt(time.split(':')[0], 10)
+            return isNaN(h) ? -1 : h
+          }
+
+          function bestPerSlot(flights: Flight[]) {
+            return slots.map(slot => {
+              const inSlot = flights.filter(f => {
+                const h = getHour(f.departureTime)
+                return h >= slot.min && h < slot.max
+              })
+              const best = inSlot.length > 0 ? inSlot.reduce((a, b) => a.price < b.price ? a : b) : null
+              return { slot, best }
+            })
+          }
+
+          function cheapestSlot(items: { best: Flight | null }[]): number {
+            let min = Infinity
+            for (const item of items) {
+              if (item.best && item.best.price < min) min = item.best.price
+            }
+            return min
+          }
+
+          const outbound = [...latest.flights].filter(f => f.route === 'TRN→CTA')
+          const ret = [...latest.flights].filter(f => f.route === 'CTA→TRN')
+          const outboundSlots = bestPerSlot(outbound)
+          const returnSlots = bestPerSlot(ret)
+          const cheapestOut = cheapestSlot(outboundSlots)
+          const cheapestRet = cheapestSlot(returnSlots)
+
+          function SlotRow({ item, cheapest }: { item: { slot: { label: string }; best: Flight | null }; cheapest: number }) {
+            const isCheapest = item.best && item.best.price === cheapest
+            return (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                marginBottom: 4,
+                borderRadius: 6,
+                background: isCheapest ? '#f0fdf4' : 'transparent',
+                border: isCheapest ? '1px solid #bbf7d0' : '1px solid transparent'
+              }}>
+                <span style={{ fontSize: 14, color: '#334155' }}>{item.slot.label}</span>
+                {item.best ? (
+                  <span style={{ fontSize: 14, fontWeight: isCheapest ? 700 : 500, color: isCheapest ? '#16a34a' : '#334155' }}>
+                    {item.best.airline} €{item.best.price} ({item.best.departureTime})
+                    {isCheapest && <span style={{ marginLeft: 8, fontSize: 11, background: '#16a34a', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>PIÙ ECONOMICO</span>}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>—</span>
+                )}
+              </div>
+            )
+          }
+
+          return (
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 280px' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#2563eb' }}>
+                  ✈️ Andata — Torino → Catania
+                </h3>
+                {outboundSlots.map(item => <SlotRow key={item.slot.id} item={item} cheapest={cheapestOut} />)}
+              </div>
+              <div style={{ flex: '1 1 280px' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#7c3aed' }}>
+                  🔄 Ritorno — Catania → Torino
+                </h3>
+                {returnSlots.map(item => <SlotRow key={item.slot.id} item={item} cheapest={cheapestRet} />)}
+              </div>
+            </div>
+          )
+        })()}
+        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 12, marginBottom: 0 }}>
+          Basato sull'ultimo rilevamento. I prezzi vengono aggiornati 3 volte al giorno (6:00, 15:00, 21:00).
+        </p>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
           📈 Andamento prezzi
         </h2>
         <PriceChart history={data} />
