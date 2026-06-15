@@ -42,13 +42,7 @@ async function main() {
   const deals = findBestDeals(flights, history)
 
   console.log(`Found ${deals.length} deals (cheaper than yesterday)`)
-
-  if (deals.length >= 3) {
-    console.log('3+ cheaper routes found! Sending notification...')
-    await sendTelegramNotification(deals)
-  } else {
-    console.log('Less than 3 cheaper routes — no notification needed')
-  }
+  await sendTelegramNotification(flights, deals)
 
   await savePriceSnapshot({
     timestamp: new Date().toISOString(),
