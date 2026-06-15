@@ -26,6 +26,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - uses: actions/setup-node@v4
         with:
@@ -47,6 +49,8 @@ jobs:
           RETURN_DATE: ${{ inputs.return_date || '' }}
 
       - name: Commit updated prices
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "flight-alert-bot"
           git config user.email "bot@flight-alert.dev"
@@ -55,6 +59,5 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "snapshot $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Potasovvi/flight-alert.git
-            git push
+            git push "https://x-access-token:$(gh auth token)@github.com/${GITHUB_REPOSITORY}.git" HEAD:${GITHUB_REF_NAME}
           fi
