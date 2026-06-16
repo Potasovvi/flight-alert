@@ -1,6 +1,14 @@
-import { scrapeGoogleFlights, loadPriceHistory, savePriceSnapshot } from './scraper.js'
-import { findBestDeals } from './compare.js'
-import { sendTelegramNotification } from './notify.js'
+import { scrapeGoogleFlights, savePriceSnapshot } from './scraper.js'
+import { sendDailySummary } from './notify.js'
+
+function isEveningInRome(): boolean {
+  const hour = new Date().toLocaleString('it-IT', {
+    timeZone: 'Europe/Rome',
+    hour: '2-digit',
+    hour12: false
+  })
+  return hour === '22'
+}
 
 async function main() {
   console.log('=== Flight Alert Scraper ===')
@@ -35,16 +43,17 @@ async function main() {
     return
   }
 
-  const history = await loadPriceHistory()
-  const deals = findBestDeals(flights, history)
-
-  console.log(`Found ${deals.length} deals (cheaper than yesterday)`)
-  await sendTelegramNotification(flights, deals)
-
   await savePriceSnapshot({
     timestamp: new Date().toISOString(),
     flights
   })
+
+  if (isEveningInRome()) {
+    console.log('Evening run — sending daily summary')
+    await sendDailySummary(flights)
+  } else {
+    console.log('Skipping notification (not 22:00 Rome time)')
+  }
 
   console.log('Done')
 }

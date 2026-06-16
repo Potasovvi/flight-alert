@@ -1,13 +1,13 @@
 # Flight Alert ✈️
 
-Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)** e ti avvisa via Telegram quando conviene comprare.
+Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)** per le date **20 dicembre → 6 gennaio** e ricevi ogni sera la top 3 dei prezzi via Telegram.
 
 ## Come funziona
 
-1. **GitHub Actions** esegue lo scraper 3 volte al giorno (6:00, 15:00, 21:00 ora italiana)
+1. **GitHub Actions** esegue lo scraper 3 volte al giorno (6:00, 15:00, 22:00 ora italiana)
 2. **HTTP fetch** scarica la pagina Google Flights ed estrae i dati JSON embedded (`AF_initDataCallback`)
-3. **Confronta** i prezzi con lo snapshot del giorno prima
-4. **Telegram** ti notifica se 3+ tratte sono più economiche
+3. I dati vengono salvati in `data/prices.json` per lo storico
+4. **Alle 22:00** ricevi un riepilogo Telegram con la top 3 prezzi per andata e ritorno
 5. **React dashboard** su Vercel mostra storico e offerte
 
 ## Setup
@@ -43,7 +43,7 @@ Puoi cercare voli per date specifiche direttamente da GitHub Actions:
 2. Inserisci `departure_date` (es. `2026-10-01`) e `return_date` (es. `2026-10-07`)
 3. Lo scraper cerca TRN→CTA per quelle date e salva i risultati
 
-I cron regolari (3x/giorno) restano invariati — cercano senza date specifiche.
+I cron regolari (3x/giorno) restano invariati — cercano con le date fisse 20/12 → 6/1.
 
 ## Comandi
 
@@ -61,6 +61,7 @@ Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automati
 ## Tech
 
 - **Scraper:** HTTP fetch + parsing JSON embedded (nessun browser)
+- **Notifica serale:** alle 22:00 — top 3 voli più economici per tratta
 - **Frontend:** React + Vite + Recharts
 - **Hosting:** Vercel (static + serverless)
 - **Cron:** GitHub Actions (2000 min/mese gratis)

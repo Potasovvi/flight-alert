@@ -1,5 +1,4 @@
 import { Flight } from './scraper.js'
-import { Deal } from './compare.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID
@@ -23,32 +22,11 @@ function formatTime(): string {
   })
 }
 
-function bestByAirline(flights: Flight[]): Flight[] {
-  const map = new Map<string, Flight>()
-  for (const f of flights) {
-    const existing = map.get(f.airline)
-    if (!existing || f.price < existing.price) {
-      map.set(f.airline, f)
-    }
-  }
-  return [...map.values()].sort((a, b) => a.price - b.price)
+function topN(flights: Flight[], n: number): Flight[] {
+  return [...flights].sort((a, b) => a.price - b.price).slice(0, n)
 }
 
-function routeTable(flights: Flight[], label: string, emoji: string): string[] {
-  const best = bestByAirline(flights)
-  if (best.length === 0) return [`${emoji} ${label}: nessun volo`]
-  const lines: string[] = []
-  for (const f of best) {
-    const dep = f.departureTime ? ` (${f.departureTime})` : ''
-    lines.push(`  • ${f.airline}: €${f.price}${dep}`)
-  }
-  return [`${emoji} *${label}*`, ...lines]
-}
-
-export async function sendTelegramNotification(
-  flights: Flight[],
-  deals: Deal[]
-): Promise<void> {
+export async function sendDailySummary(flights: Flight[]): Promise<void> {
   if (!BOT_TOKEN || !CHAT_ID) {
     console.log('TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification')
     return
@@ -58,26 +36,36 @@ export async function sendTelegramNotification(
   const ret = flights.filter(f => f.route === 'CTA→TRN')
 
   const lines: string[] = [
-    `✈️ *Report voli Torino↔Catania*`,
+    `✈️ *Riepilogo giornaliero — TRN↔CTA*`,
     `📅 ${formatDate()} — ${formatTime()}`,
+    `📆 20 dic → 6 gen`,
     ''
   ]
 
-  lines.push(...routeTable(outbound, 'Andata (TRN→CTA)', '🚀'))
-  lines.push('')
-  lines.push(...routeTable(ret, 'Ritorno (CTA→TRN)', '🔄'))
-
-  if (deals.length > 0) {
-    lines.push('', `💰 *Offerte del giorno:*`)
-    for (const d of deals) {
-      const dropEmoji = d.percentageDrop >= 20 ? '🔥' : d.percentageDrop >= 10 ? '💥' : '↓'
-      lines.push(
-        `  ${d.flight.route === 'CTA→TRN' ? '(R) ' : ''}${d.flight.airline} ${d.flight.departureTime}→${d.flight.arrivalTime}`,
-        `   €${d.flight.price}  ${dropEmoji} -${d.percentageDrop}% (era €${d.previousPrice})`
-      )
-    }
+  const topOutbound = topN(outbound, 3)
+  lines.push(`🚀 *Top 3 Andata (TRN→CTA)*`)
+  if (topOutbound.length === 0) {
+    lines.push('  Nessun volo trovato')
   } else {
-    lines.push('', '📊 Prezzi invariati rispetto al giorno precedente')
+    for (let i = 0; i < topOutbound.length; i++) {
+      const f = topOutbound[i]
+      const dep = f.departureTime ? ` (${f.departureTime})` : ''
+      lines.push(`  ${i + 1}. ${f.airline}: €${f.price}${dep}`)
+    }
+  }
+
+  lines.push('')
+
+  const topReturn = topN(ret, 3)
+  lines.push(`🔄 *Top 3 Ritorno (CTA→TRN)*`)
+  if (topReturn.length === 0) {
+    lines.push('  Nessun volo trovato')
+  } else {
+    for (let i = 0; i < topReturn.length; i++) {
+      const f = topReturn[i]
+      const dep = f.departureTime ? ` (${f.departureTime})` : ''
+      lines.push(`  ${i + 1}. ${f.airline}: €${f.price}${dep}`)
+    }
   }
 
   lines.push('', '[🔗 Apri la web app](https://flight-alert-omega.vercel.app/)', '—', 'flight-alert')
@@ -107,9 +95,9 @@ export async function sendTelegramNotification(
       const errorText = await response.text()
       console.error('Telegram API error:', response.status, errorText)
     } else {
-      console.log('Telegram notification sent successfully')
+      console.log('Daily summary sent successfully')
     }
   } catch (e) {
-    console.error('Failed to send Telegram notification:', e)
+    console.error('Failed to send daily summary:', e)
   }
 }
