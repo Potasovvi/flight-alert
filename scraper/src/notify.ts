@@ -4,6 +4,12 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const DRY_RUN = process.env.DRY_RUN === 'true'
 
+function formatDateRange(dep: string, ret: string): string {
+  const fmt = (d: string) => new Date(d + 'T00:00:00')
+    .toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+  return `${fmt(dep)} → ${fmt(ret)}`
+}
+
 function formatDate(): string {
   return new Date().toLocaleDateString('it-IT', {
     timeZone: 'Europe/Rome',
@@ -26,7 +32,7 @@ function topN(flights: Flight[], n: number): Flight[] {
   return [...flights].sort((a, b) => a.price - b.price).slice(0, n)
 }
 
-export async function sendDailySummary(flights: Flight[]): Promise<void> {
+export async function sendDailySummary(flights: Flight[], departureDate?: string, returnDate?: string, isCustom: boolean = false): Promise<void> {
   if (!BOT_TOKEN || !CHAT_ID) {
     console.log('TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification')
     return
@@ -35,10 +41,13 @@ export async function sendDailySummary(flights: Flight[]): Promise<void> {
   const outbound = flights.filter(f => f.route === 'TRN→CTA')
   const ret = flights.filter(f => f.route === 'CTA→TRN')
 
+  const title = isCustom ? '✈️ *Ricerca personalizzata — TRN↔CTA*' : '✈️ *Riepilogo giornaliero — TRN↔CTA*'
+  const dateRange = departureDate && returnDate ? formatDateRange(departureDate, returnDate) : ''
+
   const lines: string[] = [
-    `✈️ *Riepilogo giornaliero — TRN↔CTA*`,
+    title,
     `📅 ${formatDate()} — ${formatTime()}`,
-    `📆 20 dic → 6 gen`,
+    ...(dateRange ? [`📆 ${dateRange}`] : []),
     ''
   ]
 

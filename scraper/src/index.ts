@@ -16,6 +16,9 @@ async function main() {
 
   const FIXED_DEPARTURE = '2026-12-20'
   const FIXED_RETURN = '2027-01-06'
+
+  const sendTelegram = process.env.SEND_TELEGRAM === 'true'
+
   const departureDate = process.env.DEPARTURE_DATE || FIXED_DEPARTURE
   const returnDate = process.env.RETURN_DATE || FIXED_RETURN
 
@@ -48,9 +51,12 @@ async function main() {
     flights
   })
 
-  if (isEveningInRome()) {
+  if (sendTelegram) {
+    console.log('Send to Telegram requested — sending notification')
+    await sendDailySummary(flights, departureDate, returnDate, true)
+  } else if (isEveningInRome()) {
     console.log('Evening run — sending daily summary')
-    await sendDailySummary(flights)
+    await sendDailySummary(flights, departureDate, returnDate, false)
   } else {
     console.log('Skipping notification (not 22:00 Rome time)')
   }

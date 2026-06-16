@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Only GET allowed' })
   }
 
-  const { departure_date, return_date } = req.query
+  const { departure_date, return_date, send_telegram } = req.query
 
   if (!GITHUB_TOKEN) {
     return res.status(500).json({ error: 'GITHUB_PAT not configured' })
@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   const body = { ref: 'main', inputs: {} }
   if (departure_date) body.inputs.departure_date = departure_date
   if (return_date) body.inputs.return_date = return_date
+  if (send_telegram === 'true') body.inputs.send_telegram = true
 
   try {
     const resp = await fetch(

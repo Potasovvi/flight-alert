@@ -1,6 +1,6 @@
 # Flight Alert ✈️
 
-Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)** per le date **20 dicembre → 6 gennaio** e ricevi ogni sera la top 3 dei prezzi via Telegram.
+Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)**, con notifiche Telegram sia per le date fisse **20 dicembre → 6 gennaio** (riepilogo serale) sia per **ricerche con date personalizzate**.
 
 ## Come funziona
 
@@ -9,6 +9,7 @@ Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)** per le date **20 d
 3. I dati vengono salvati in `data/prices.json` per lo storico
 4. **Alle 22:00** ricevi un riepilogo Telegram con la top 3 prezzi per andata e ritorno
 5. **React dashboard** su Vercel mostra storico e offerte
+6. Con **date personalizzate** puoi cercare voli e inviare i risultati su Telegram con un click
 
 ## Setup
 
@@ -35,15 +36,21 @@ Vai su Settings → Secrets and variables → Actions:
 
 Collega il repo su [vercel.com](https://vercel.com) — si configura da solo con `vercel.json`.
 
-## Workflow con date personalizzate
+## Ricerca con date personalizzate
 
-Puoi cercare voli per date specifiche direttamente da GitHub Actions:
+Dalla dashboard puoi cercare voli per date specifiche:
+
+1. Inserisci andata e ritorno nel form
+2. **Cerca voli** → avvia lo scrape su GitHub Actions con quelle date
+3. Dopo la ricerca, clicca **Send to Telegram 📨** per ricevere i risultati su Telegram
+4. Il messaggio mostra la top 3 andata/ritorno per le tue date
+
+Puoi anche usare GitHub Actions direttamente:
 
 1. Vai su **Actions** → **Flight Alert Scraper** → **Run workflow**
-2. Inserisci `departure_date` (es. `2026-10-01`) e `return_date` (es. `2026-10-07`)
-3. Lo scraper cerca TRN→CTA per quelle date e salva i risultati
+2. Inserisci `departure_date` e/o `return_date`, imposta `send_telegram: true` per la notifica
 
-I cron regolari (3x/giorno) restano invariati — cercano con le date fisse 20/12 → 6/1.
+I cron regolari (3x/giorno) restano invariati — cercano con le date fisse 20/12 → 6/1 e inviano il riepilogo serale.
 
 ## Comandi
 
@@ -61,7 +68,8 @@ Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automati
 ## Tech
 
 - **Scraper:** HTTP fetch + parsing JSON embedded (nessun browser)
-- **Notifica serale:** alle 22:00 — top 3 voli più economici per tratta
+- **Notifica serale:** alle 22:00 — top 3 voli più economici per tratta (date fisse)
+- **Notifica su richiesta:** bottone "Send to Telegram" per risultati con date personalizzate
 - **Frontend:** React + Vite + Recharts
 - **Hosting:** Vercel (static + serverless)
 - **Cron:** GitHub Actions (2000 min/mese gratis)

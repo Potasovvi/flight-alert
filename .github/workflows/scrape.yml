@@ -18,6 +18,11 @@ on:
         description: 'Data ritorno (YYYY-MM-DD) — lascia vuoto per solo andata'
         required: false
         type: string
+      send_telegram:
+        description: 'Invia notifica Telegram con i risultati'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   scrape:
@@ -47,6 +52,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DEPARTURE_DATE: ${{ inputs.departure_date || '' }}
           RETURN_DATE: ${{ inputs.return_date || '' }}
+          SEND_TELEGRAM: ${{ inputs.send_telegram || 'false' }}
 
       - name: Commit updated prices
         env:
