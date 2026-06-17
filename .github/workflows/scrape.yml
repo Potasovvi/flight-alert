@@ -2,11 +2,13 @@ name: Flight Alert Scraper
 
 on:
   schedule:
+    # 5:00 UTC → 7:00 CEST / 6:00 CET
     - cron: '0 5 * * *'
+    # 14:00 UTC → 16:00 CEST / 15:00 CET
     - cron: '0 14 * * *'
+    # 20:00 UTC → 22:00 CEST (estate) — notifica serale
     - cron: '0 20 * * *'
-    - cron: '0 4 * * *'
-    - cron: '0 13 * * *'
+    # 21:00 UTC → 22:00 CET (inverno) — notifica serale
     - cron: '0 21 * * *'
   workflow_dispatch:
     inputs:
@@ -21,7 +23,7 @@ on:
       send_telegram:
         description: 'Invia notifica Telegram con i risultati'
         required: false
-        default: false
+        default: true
         type: boolean
 
 jobs:

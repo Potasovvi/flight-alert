@@ -2,12 +2,15 @@ import { scrapeGoogleFlights, savePriceSnapshot } from './scraper.js'
 import { sendDailySummary } from './notify.js'
 
 function isEveningInRome(): boolean {
-  const hour = new Date().toLocaleString('it-IT', {
+  const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Europe/Rome',
-    hour: '2-digit',
-    hour12: false
-  })
-  return hour === '22'
+    hour: 'numeric',
+    hour12: false,
+  }).formatToParts(new Date())
+  const hour = parts.find(p => p.type === 'hour')?.value ?? ''
+  const match = hour === '22'
+  console.log(`isEveningInRome: hour=${hour}, match=${match}`)
+  return match
 }
 
 async function main() {

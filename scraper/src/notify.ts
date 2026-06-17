@@ -34,7 +34,12 @@ function topN(flights: Flight[], n: number): Flight[] {
 
 export async function sendDailySummary(flights: Flight[], departureDate?: string, returnDate?: string, isCustom: boolean = false): Promise<void> {
   if (!BOT_TOKEN || !CHAT_ID) {
-    console.log('TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification')
+    console.log(`TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification (BOT_TOKEN=${!!BOT_TOKEN}, CHAT_ID=${!!CHAT_ID})`)
+    return
+  }
+
+  if (flights.length === 0) {
+    console.log('No flights to report — skipping notification')
     return
   }
 
