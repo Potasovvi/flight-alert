@@ -6,7 +6,7 @@ Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)**, con notifiche Tel
 
 1. **GitHub Actions** esegue lo scraper 4 volte al giorno (7:00, 16:00, 22:00, 23:00 ora italiana)
 2. **HTTP fetch** scarica la pagina Google Flights ed estrae i dati JSON embedded (`AF_initDataCallback`)
-3. I dati vengono salvati in `data/prices.json` per lo storico
+3. I dati vengono salvati in `data/prices.json` (storico completo) e `data/prices.csv` (miglior prezzo per tratta)
 4. **In serata (18-23)** ricevi un riepilogo Telegram con la top 3 prezzi per andata e ritorno (massimo 1 notifica al giorno)
 5. **React dashboard** su Vercel mostra storico e grafici
 6. Con **date personalizzate** puoi cercare voli e inviare i risultati su Telegram con un click
@@ -63,7 +63,14 @@ cd scraper && DRY_RUN=true npm start  # Scraper senza inviare notifiche Telegram
 
 ## Dati
 
-Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automaticamente da GitHub Actions. La dashboard li legge da **GitHub raw** (sempre fresh, nessun redeploy necessario).
+Gli snapshot dei prezzi sono in `data/prices.json` (storico completo) e `data/prices.csv` (miglior prezzo per tratta, una riga per rilevamento). La dashboard li legge da **GitHub raw** (sempre fresh, nessun redeploy necessario).
+
+Puoi scaricare il CSV anche dalla web app: footer → **Scarica CSV** (endpoint `/api/csv`).
+
+Colonne CSV:
+```
+scrape_timestamp,andata_tratta,andata_data,andata_compagnia,andata_orario,andata_prezzo,ritorno_tratta,ritorno_data,ritorno_compagnia,ritorno_orario,ritorno_prezzo
+```
 
 ## Tech
 

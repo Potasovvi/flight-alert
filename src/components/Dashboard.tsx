@@ -275,6 +275,8 @@ export function Dashboard() {
 
       <footer style={{ marginTop: 48, padding: '16px 0', borderTop: '1px solid #e2e8f0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
         Flight Alert — Prezzi aggiornati 3 volte al giorno (6:00, 15:00, 21:00)
+        {' · '}
+        <a href="/api/csv" target="_blank" style={{ color: '#94a3b8', textDecoration: 'underline' }}>Scarica CSV</a>
       </footer>
     </div>
   )

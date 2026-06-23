@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { scrapeGoogleFlights, savePriceSnapshot } from './scraper.js'
 import { sendDailySummary } from './notify.js'
+import { appendToCsv } from './csv.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const LAST_NOTIFIED_FILE = path.resolve(__dirname, '../../data/.last-notification')
@@ -71,6 +72,11 @@ async function main() {
   }
 
   await savePriceSnapshot({
+    timestamp: new Date().toISOString(),
+    flights
+  })
+
+  await appendToCsv({
     timestamp: new Date().toISOString(),
     flights
   })
