@@ -1,15 +1,36 @@
+import fs from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { scrapeGoogleFlights, savePriceSnapshot } from './scraper.js'
 import { sendDailySummary } from './notify.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const LAST_NOTIFIED_FILE = path.resolve(__dirname, '../../data/.last-notification')
+
+async function hasNotifiedToday(): Promise<boolean> {
+  try {
+    const lastDate = await fs.readFile(LAST_NOTIFIED_FILE, 'utf-8')
+    const today = new Date().toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
+    return lastDate.trim() === today
+  } catch {
+    return false
+  }
+}
+
+async function markNotifiedToday(): Promise<void> {
+  const today = new Date().toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
+  await fs.writeFile(LAST_NOTIFIED_FILE, today, 'utf-8')
+}
+
 function isEveningInRome(): boolean {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const romeHour = new Date().toLocaleString('it-IT', {
     timeZone: 'Europe/Rome',
     hour: 'numeric',
     hour12: false,
-  }).formatToParts(new Date())
-  const hour = parts.find(p => p.type === 'hour')?.value ?? ''
-  const match = hour === '22'
-  console.log(`isEveningInRome: hour=${hour}, match=${match}`)
+  })
+  const hour = parseInt(romeHour, 10)
+  const match = hour >= 18 && hour <= 23
+  console.log(`isEveningInRome: romeHour=${romeHour}, hour=${hour}, match=${match}`)
   return match
 }
 
@@ -54,14 +75,20 @@ async function main() {
     flights
   })
 
+  const eveningInRome = isEveningInRome()
+
   if (sendTelegram) {
     console.log('Send to Telegram requested — sending notification')
     await sendDailySummary(flights, departureDate, returnDate, true)
-  } else if (isEveningInRome()) {
+    await markNotifiedToday()
+  } else if (eveningInRome && await hasNotifiedToday()) {
+    console.log('Already notified today — skipping')
+  } else if (eveningInRome) {
     console.log('Evening run — sending daily summary')
     await sendDailySummary(flights, departureDate, returnDate, false)
+    await markNotifiedToday()
   } else {
-    console.log('Skipping notification (not 22:00 Rome time)')
+    console.log('Skipping notification (not evening in Rome)')
   }
 
   console.log('Done')

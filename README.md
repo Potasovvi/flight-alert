@@ -4,11 +4,11 @@ Monitora i prezzi dei voli **Torino (TRN) → Catania (CTA)**, con notifiche Tel
 
 ## Come funziona
 
-1. **GitHub Actions** esegue lo scraper 3 volte al giorno (6:00, 15:00, 22:00 ora italiana)
+1. **GitHub Actions** esegue lo scraper 4 volte al giorno (7:00, 16:00, 22:00, 23:00 ora italiana)
 2. **HTTP fetch** scarica la pagina Google Flights ed estrae i dati JSON embedded (`AF_initDataCallback`)
 3. I dati vengono salvati in `data/prices.json` per lo storico
-4. **Alle 22:00** ricevi un riepilogo Telegram con la top 3 prezzi per andata e ritorno
-5. **React dashboard** su Vercel mostra storico e offerte
+4. **In serata (18-23)** ricevi un riepilogo Telegram con la top 3 prezzi per andata e ritorno (massimo 1 notifica al giorno)
+5. **React dashboard** su Vercel mostra storico e grafici
 6. Con **date personalizzate** puoi cercare voli e inviare i risultati su Telegram con un click
 
 ## Setup
@@ -50,15 +50,15 @@ Puoi anche usare GitHub Actions direttamente:
 1. Vai su **Actions** → **Flight Alert Scraper** → **Run workflow**
 2. Inserisci `departure_date` e/o `return_date`, imposta `send_telegram: true` per la notifica
 
-I cron regolari (3x/giorno) restano invariati — cercano con le date fisse 20/12 → 6/1 e inviano il riepilogo serale.
+I cron regolari restano invariati — cercano con le date fisse 20/12 → 6/1 e inviano il riepilogo serale (massimo 1 notifica al giorno).
 
 ## Comandi
 
 ```sh
 npm run dev                # Dev frontend :5173
 npm run build              # Build produzione
-cd scraper && npm start    # Scraper manuale (HTTP + JSON parsing)
-cd scraper && npm start:dry# Scraper senza inviare notifiche Telegram
+cd scraper && npm start       # Scraper manuale (HTTP + JSON parsing)
+cd scraper && DRY_RUN=true npm start  # Scraper senza inviare notifiche Telegram
 ```
 
 ## Dati
@@ -68,7 +68,7 @@ Gli snapshot dei prezzi sono in `data/prices.json` e vengono committati automati
 ## Tech
 
 - **Scraper:** HTTP fetch + parsing JSON embedded (nessun browser)
-- **Notifica serale:** alle 22:00 — top 3 voli più economici per tratta (date fisse)
+- **Notifica serale:** finestra 18-23 Roma, max 1 notifica/giorno — top 3 voli più economici per tratta (date fisse)
 - **Notifica su richiesta:** bottone "Send to Telegram" per risultati con date personalizzate
 - **Frontend:** React + Vite + Recharts
 - **Hosting:** Vercel (static + serverless)

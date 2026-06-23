@@ -1,48 +1,8 @@
 import { usePrices } from '../hooks/usePrices.js'
-import { DealCard } from './DealCard.js'
+
 import { PriceChart } from './PriceChart.js'
 import { DateSearchForm } from './DateSearchForm.js'
 import type { Flight } from '../types.js'
-
-interface Deal {
-  flight: Flight
-  previousPrice: number
-  priceDrop: number
-  percentageDrop: number
-}
-
-function computeDeals(snapshots: { timestamp: string; flights: Flight[] }[]): Deal[] {
-  if (snapshots.length < 2) return []
-
-  const sorted = [...snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-  const current = sorted[0]
-  const previous = sorted[1]
-
-  const prevMap = new Map<string, number>()
-  for (const f of previous.flights) {
-    const key = `${f.airline}|${f.departureTime}`
-    if (!prevMap.has(key) || f.price < prevMap.get(key)!) {
-      prevMap.set(key, f.price)
-    }
-  }
-
-  const deals: Deal[] = []
-  for (const flight of current.flights) {
-    const key = `${flight.airline}|${flight.departureTime}`
-    const prevPrice = prevMap.get(key)
-    if (prevPrice && prevPrice > flight.price) {
-      deals.push({
-        flight,
-        previousPrice: prevPrice,
-        priceDrop: prevPrice - flight.price,
-        percentageDrop: Math.round(((prevPrice - flight.price) / prevPrice) * 100)
-      })
-    }
-  }
-
-  deals.sort((a, b) => b.percentageDrop - a.percentageDrop)
-  return deals
-}
 
 function getLatestUpdate(snapshots: { timestamp: string }[]): string {
   if (snapshots.length === 0) return ''
@@ -113,8 +73,6 @@ export function Dashboard() {
     )
   }
 
-  const deals = computeDeals(data.snapshots)
-  const topDeals = deals.slice(0, 3)
   const lastUpdate = getLatestUpdate(data.snapshots)
 
   return (
@@ -137,26 +95,6 @@ export function Dashboard() {
       </header>
 
       <DateSearchForm />
-
-      <section style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          {topDeals.length > 0 ? '💰 Offerte del giorno' : '📊 Panoramica prezzi'}
-        </h2>
-
-        {topDeals.length > 0 ? (
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {topDeals.map((deal, i) => (
-              <DealCard key={i} {...deal} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: '#94a3b8' }}>
-            {deals.length === 0
-              ? 'Nessuna offerta rispetto al giorno precedente.'
-              : `Solo ${deals.length} tratte in calo — serve il confronto con almeno 3.`}
-          </p>
-        )}
-      </section>
 
       <section style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
@@ -269,7 +207,7 @@ export function Dashboard() {
 
       <section>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          📋 Ultimi rilevamenti
+          📋 Ultimo rilevamento: {lastUpdate}
         </h2>
         {(() => {
           const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
