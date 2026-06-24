@@ -62,7 +62,7 @@ jobs:
         run: |
           git config user.name "flight-alert-bot"
           git config user.email "bot@flight-alert.dev"
-          git add data/prices.json
+          git add data/prices.json data/prices.csv
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit"
           else
