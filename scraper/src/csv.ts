@@ -30,10 +30,10 @@ export async function appendToCsv(snapshot: PriceSnapshot): Promise<void> {
 
   const ts = snapshot.timestamp
   const andata = outbound
-    ? `${escapeCsv('TRN→CTA')},${escapeCsv(outbound.date)},${escapeCsv(outbound.airline)},${escapeCsv(`${outbound.departureTime}→${outbound.arrivalTime}`)},${outbound.price}`
+    ? `${escapeCsv('TRN->CTA')},${escapeCsv(outbound.date)},${escapeCsv(outbound.airline)},${escapeCsv(`${outbound.departureTime}->${outbound.arrivalTime}`)},${outbound.price}`
     : ',,,,'
   const ritorno = ret
-    ? `${escapeCsv('CTA→TRN')},${escapeCsv(ret.date)},${escapeCsv(ret.airline)},${escapeCsv(`${ret.departureTime}→${ret.arrivalTime}`)},${ret.price}`
+    ? `${escapeCsv('CTA->TRN')},${escapeCsv(ret.date)},${escapeCsv(ret.airline)},${escapeCsv(`${ret.departureTime}->${ret.arrivalTime}`)},${ret.price}`
     : ',,,,'
 
   const row = `${ts},${andata},${ritorno}\n`
