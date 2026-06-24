@@ -25,6 +25,11 @@ on:
         required: false
         default: true
         type: boolean
+      commit_csv:
+        description: 'Forza il commit di prices.csv (default: solo sera)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   scrape:
@@ -56,13 +61,26 @@ jobs:
           RETURN_DATE: ${{ inputs.return_date || '' }}
           SEND_TELEGRAM: ${{ inputs.send_telegram || 'false' }}
 
+      - name: Check if evening in Rome
+        id: evening-check
+        run: |
+          HOUR=$(TZ='Europe/Rome' date +%H)
+          if [ "$HOUR" -ge 18 ] && [ "$HOUR" -le 23 ]; then
+            echo "is_evening=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_evening=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Commit updated prices
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "flight-alert-bot"
           git config user.email "bot@flight-alert.dev"
-          git add data/prices.json data/prices.csv
+          git add data/prices.json
+          if [ "${{ steps.evening-check.outputs.is_evening }}" = "true" ] || [ "${{ inputs.commit_csv || 'false' }}" = "true" ]; then
+            git add data/prices.csv
+          fi
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit"
           else
