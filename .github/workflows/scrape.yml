@@ -78,7 +78,7 @@ jobs:
           git config user.name "flight-alert-bot"
           git config user.email "bot@flight-alert.dev"
           git add data/prices.json
-          if [ "${{ steps.evening-check.outputs.is_evening }}" = "true" ] || [ "${{ inputs.commit_csv || 'false' }}" = "true" ]; then
+          if [ "${{ steps.evening-check.outputs.is_evening }}" = "true" ] ; then
             test -f data/prices.csv && git add data/prices.csv || true
           fi
           if git diff --quiet && git diff --staged --quiet; then
