@@ -122,7 +122,7 @@ export function Dashboard() {
 
       <section>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          📋 Prezzi predefiniti (20/12 → 6/1)
+          📋 Prezzi della ricerca predefinita (20/12 → 6/1)
         </h2>
         {(() => {
           if (!latestScheduled) return null

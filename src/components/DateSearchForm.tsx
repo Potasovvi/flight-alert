@@ -36,6 +36,10 @@ export function DateSearchForm() {
         🔍 Cerca voli per altre date
       </summary>
       <div style={{ marginTop: 12 }}>
+        <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
+          Vuoi cercare i prezzi della tratta TO→CT per date personalizzate?
+          Inserisci qui e ricevi il messaggio su Telegram!
+        </p>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Andata *</label>
