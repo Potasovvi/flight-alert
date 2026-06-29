@@ -1,6 +1,5 @@
 import { usePrices } from '../hooks/usePrices.js'
 
-import { PriceChart } from './PriceChart.js'
 import { PriceHero } from './PriceHero.js'
 import { DateSearchForm } from './DateSearchForm.js'
 import { getLatestSnapshot, getPreviousSnapshot, getPriceChange } from '../utils/priceTrend.js'
@@ -104,13 +103,6 @@ export function Dashboard() {
           previousFlights={previousSnapshot?.flights ?? []}
         />
       )}
-
-      <section style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          📈 Andamento prezzi
-        </h2>
-        <PriceChart history={data} />
-      </section>
 
       <section>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>

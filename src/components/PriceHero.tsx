@@ -1,4 +1,3 @@
-import { DealCard } from './DealCard.js'
 import { getCheapestPerRoute, getPriceChange } from '../utils/priceTrend.js'
 import type { Flight } from '../types.js'
 
@@ -12,17 +11,6 @@ function HeroCard({ flight, previousFlights }: { flight: Flight; previousFlights
 
   const isDrop = previousPrice !== null && diff < 0
   const isRise = previousPrice !== null && diff > 0
-
-  if (previousPrice !== null && isDrop) {
-    return (
-      <DealCard
-        flight={flight}
-        previousPrice={previousPrice}
-        priceDrop={Math.abs(diff)}
-        percentageDrop={Math.round((Math.abs(diff) / previousPrice) * 100)}
-      />
-    )
-  }
 
   return (
     <div style={{
@@ -38,7 +26,20 @@ function HeroCard({ flight, previousFlights }: { flight: Flight; previousFlights
       cursor: 'pointer'
     }}
       onClick={() => window.open(flight.url, '_blank', 'noopener')}>
-      <strong style={{ fontSize: 16 }}>{flight.airline}</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <strong style={{ fontSize: 16 }}>{flight.airline}</strong>
+        <span style={{
+          background: '#f0fdf4',
+          color: '#166534',
+          padding: '2px 8px',
+          borderRadius: 999,
+          fontSize: 11,
+          fontWeight: 600,
+          whiteSpace: 'nowrap'
+        }}>
+          💰 Miglior prezzo
+        </span>
+      </div>
       <div style={{ fontSize: 13, color: '#64748b' }}>
         {flight.departureTime} → {flight.arrivalTime}
       </div>
@@ -46,12 +47,17 @@ function HeroCard({ flight, previousFlights }: { flight: Flight; previousFlights
         <span style={{ fontSize: 24, fontWeight: 700, color: '#0f172a' }}>
           €{flight.price}
         </span>
+        {isDrop && (
+          <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 600 }}>
+            ↓ -€{Math.abs(diff)}
+          </span>
+        )}
         {isRise && (
           <span style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>
             ↑ +€{diff}
           </span>
         )}
-        {!isRise && previousPrice === null && (
+        {previousPrice === null && (
           <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600 }}>
             —
           </span>
@@ -77,17 +83,23 @@ export function PriceHero({ flights, previousFlights }: PriceHeroProps) {
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         {outbound && (
           <div style={{ flex: '1 1 280px' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#2563eb' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 0', color: '#2563eb' }}>
               ✈️ Andata — Torino → Catania
             </h3>
+            <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 8px' }}>
+              Il volo più economico oggi
+            </p>
             <HeroCard flight={outbound} previousFlights={previousFlights} />
           </div>
         )}
         {ret && (
           <div style={{ flex: '1 1 280px' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#7c3aed' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 0', color: '#7c3aed' }}>
               🔄 Ritorno — Catania → Torino
             </h3>
+            <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 8px' }}>
+              Il volo più economico oggi
+            </p>
             <HeroCard flight={ret} previousFlights={previousFlights} />
           </div>
         )}
