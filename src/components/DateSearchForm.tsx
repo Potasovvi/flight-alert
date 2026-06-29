@@ -4,16 +4,13 @@ export function DateSearchForm() {
   const [departure, setDeparture] = useState('')
   const [returnDate, setReturnDate] = useState('')
   const [loading, setLoading] = useState(false)
-  const [telegramLoading, setTelegramLoading] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [telegramMsg, setTelegramMsg] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!departure) return
     setLoading(true)
     setMsg(null)
-    setTelegramMsg(null)
 
     const params = new URLSearchParams({ departure_date: departure })
     if (returnDate) params.set('return_date', returnDate)
@@ -32,27 +29,6 @@ export function DateSearchForm() {
       setLoading(false)
     }
   }
-
-  async function handleSendTelegram() {
-    if (!departure) return
-    setTelegramLoading(true)
-    setTelegramMsg(null)
-
-    const params = new URLSearchParams({ departure_date: departure, send_telegram: 'true' })
-    if (returnDate) params.set('return_date', returnDate)
-
-    try {
-      const res = await fetch(`/api/trigger-scrape?${params}`)
-      const data = await res.json()
-      setTelegramMsg(data.success ? 'Notifica Telegram inviata! ✅' : data.error || 'Errore')
-    } catch {
-      setTelegramMsg('Errore di connessione')
-    } finally {
-      setTelegramLoading(false)
-    }
-  }
-
-  const searchCompleted = msg?.type === 'success'
 
   return (
     <details style={{ marginTop: 48 }}>
@@ -80,17 +56,6 @@ export function DateSearchForm() {
           <p style={{ margin: '12px 0 0', fontSize: 13, color: msg.type === 'success' ? '#16a34a' : '#dc2626' }}>
             {msg.text}
           </p>
-        )}
-        {searchCompleted && (
-          <div style={{ marginTop: 12 }}>
-            <button onClick={handleSendTelegram} disabled={telegramLoading}
-              style={{ padding: '8px 20px', background: telegramLoading ? '#94a3b8' : '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: telegramLoading ? 'not-allowed' : 'pointer' }}>
-              {telegramLoading ? 'Invio...' : 'Invia su Telegram 📨'}
-            </button>
-            {telegramMsg && (
-              <p style={{ margin: '8px 0 0', fontSize: 13, color: '#16a34a' }}>{telegramMsg}</p>
-            )}
-          </div>
         )}
       </div>
     </details>

@@ -14,6 +14,7 @@ export interface Flight {
 export interface PriceSnapshot {
   timestamp: string
   flights: Flight[]
+  source: string
 }
 
 export interface PriceHistory {

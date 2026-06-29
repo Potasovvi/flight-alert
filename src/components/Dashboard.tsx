@@ -47,6 +47,18 @@ function Td({ children, style }: { children: React.ReactNode; style?: React.CSSP
   )
 }
 
+function SlimTd({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <td style={{
+      padding: '6px 8px',
+      color: '#334155',
+      ...style
+    }}>
+      {children}
+    </td>
+  )
+}
+
 export function Dashboard() {
   const { data, loading, error } = usePrices()
 
@@ -74,9 +86,13 @@ export function Dashboard() {
     )
   }
 
-  const lastUpdate = getLatestUpdate(data.snapshots)
-  const latestSnapshot = getLatestSnapshot(data.snapshots)
-  const previousSnapshot = getPreviousSnapshot(data.snapshots)
+  const scheduledSnapshots = data.snapshots.filter(s => s.source === 'scheduled')
+  const manualSnapshots = data.snapshots.filter(s => s.source === 'manual')
+
+  const lastUpdate = getLatestUpdate(scheduledSnapshots)
+  const latestScheduled = getLatestSnapshot(scheduledSnapshots, 'scheduled')
+  const previousScheduled = getPreviousSnapshot(scheduledSnapshots, 'scheduled')
+  const latestManual = getLatestSnapshot(manualSnapshots, 'manual')
 
   return (
     <div style={{
@@ -97,30 +113,29 @@ export function Dashboard() {
         </p>
       </header>
 
-      {latestSnapshot && (
+      {latestScheduled && (
         <PriceHero
-          flights={latestSnapshot.flights}
-          previousFlights={previousSnapshot?.flights ?? []}
+          flights={latestScheduled.flights}
+          previousFlights={previousScheduled?.flights ?? []}
         />
       )}
 
       <section>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          📋 Ultimo rilevamento: {lastUpdate}
+          📋 Prezzi predefiniti (20/12 → 6/1)
         </h2>
         {(() => {
-          const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-          const latest = sorted[0]
-          if (!latest) return null
+          if (!latestScheduled) return null
 
-          const outbound = [...latest.flights]
+          const outbound = [...latestScheduled.flights]
             .filter(f => f.route === 'TRN→CTA')
             .sort((a, b) => a.price - b.price)
-          const ret = [...latest.flights]
+          const ret = [...latestScheduled.flights]
             .filter(f => f.route === 'CTA→TRN')
             .sort((a, b) => a.price - b.price)
+          const prev = previousScheduled?.flights ?? []
 
-          function FlightTable({ title, flights, color, previousFlights }: { title: string; flights: Flight[]; color: string; previousFlights: Flight[] }) {
+          function FlightTable({ title, flights, color }: { title: string; flights: Flight[]; color: string }) {
             return (
               <div style={{ marginBottom: 24 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color }}>{title}</h3>
@@ -141,7 +156,7 @@ export function Dashboard() {
                       </thead>
                       <tbody>
                         {flights.map((f, i) => {
-                          const { diff } = getPriceChange(f, previousFlights)
+                          const { diff } = getPriceChange(f, prev)
                           return (
                             <tr key={i}
                               onClick={() => window.open(f.url, '_blank', 'noopener')}
@@ -175,8 +190,8 @@ export function Dashboard() {
 
           return (
             <>
-              <FlightTable title="✈️ Andata — Torino → Catania" flights={outbound} color="#2563eb" previousFlights={previousSnapshot?.flights ?? []} />
-              <FlightTable title="🔄 Ritorno — Catania → Torino" flights={ret} color="#7c3aed" previousFlights={previousSnapshot?.flights ?? []} />
+              <FlightTable title="✈️ Andata — Torino → Catania" flights={outbound} color="#2563eb" />
+              <FlightTable title="🔄 Ritorno — Catania → Torino" flights={ret} color="#7c3aed" />
               <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 0, marginBottom: 0 }}>
                 Clicca su una riga per aprire la ricerca su Google Flights
               </p>
@@ -184,6 +199,101 @@ export function Dashboard() {
           )
         })()}
       </section>
+
+      {latestManual && (() => {
+        const manualOutbound = [...latestManual.flights]
+          .filter(f => f.route === 'TRN→CTA')
+          .sort((a, b) => a.price - b.price)
+        const manualRet = [...latestManual.flights]
+          .filter(f => f.route === 'CTA→TRN')
+          .sort((a, b) => a.price - b.price)
+        const manualDate = manualOutbound[0]?.date || ''
+        const manualReturnDate = manualRet[0]?.date || ''
+
+        return (
+          <section style={{
+            marginTop: 40,
+            padding: 20,
+            border: '1px solid #dbeafe',
+            borderRadius: 8,
+            background: '#f8faff'
+          }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 4px', color: '#1e40af' }}>
+              🔍 La tua ricerca personalizzata
+            </h2>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 16px' }}>
+              {manualDate}{manualReturnDate ? ` → ${manualReturnDate}` : ''} — {latestManual.flights.length} voli trovati
+            </p>
+            {manualOutbound.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 6px', color: '#2563eb' }}>
+                  ✈️ Andata — Torino → Catania
+                </h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Compagnia</Th>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Partenza</Th>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Arrivo</Th>
+                      <Th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 12 }}>Prezzo</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {manualOutbound.map((f, i) => (
+                      <tr key={i}
+                        onClick={() => window.open(f.url, '_blank', 'noopener')}
+                        style={{ cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}>
+                        <SlimTd>{f.airline}</SlimTd>
+                        <SlimTd>{f.departureTime || '—'}</SlimTd>
+                        <SlimTd>{f.arrivalTime || '—'}</SlimTd>
+                        <SlimTd style={{ textAlign: 'right', fontWeight: 700 }}>€{f.price}</SlimTd>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {manualRet.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 6px', color: '#7c3aed' }}>
+                  🔄 Ritorno — Catania → Torino
+                </h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Compagnia</Th>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Partenza</Th>
+                      <Th style={{ padding: '6px 8px', fontSize: 12 }}>Arrivo</Th>
+                      <Th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 12 }}>Prezzo</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {manualRet.map((f, i) => (
+                      <tr key={i}
+                        onClick={() => window.open(f.url, '_blank', 'noopener')}
+                        style={{ cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}>
+                        <SlimTd>{f.airline}</SlimTd>
+                        <SlimTd>{f.departureTime || '—'}</SlimTd>
+                        <SlimTd>{f.arrivalTime || '—'}</SlimTd>
+                        <SlimTd style={{ textAlign: 'right', fontWeight: 700 }}>€{f.price}</SlimTd>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <button onClick={async () => {
+              const params = new URLSearchParams({ departure_date: manualDate })
+              if (manualReturnDate) params.set('return_date', manualReturnDate)
+              params.set('send_telegram', 'true')
+              await fetch(`/api/trigger-scrape?${params}`)
+            }}
+              style={{ padding: '8px 20px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer' }}>
+              Invia su Telegram 📨
+            </button>
+          </section>
+        )
+      })()}
 
       <DateSearchForm />
 

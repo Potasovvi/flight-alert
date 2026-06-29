@@ -73,7 +73,8 @@ async function main() {
 
   await savePriceSnapshot({
     timestamp: new Date().toISOString(),
-    flights
+    flights,
+    source: isDefault ? 'scheduled' : 'manual'
   })
 
   await appendToCsv({

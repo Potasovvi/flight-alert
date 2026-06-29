@@ -1,12 +1,14 @@
 import type { Flight, PriceSnapshot } from '../types.js'
 
-export function getLatestSnapshot(snapshots: PriceSnapshot[]): PriceSnapshot | null {
-  const sorted = [...snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+export function getLatestSnapshot(snapshots: PriceSnapshot[], source?: string): PriceSnapshot | null {
+  const filtered = source ? snapshots.filter(s => s.source === source) : snapshots
+  const sorted = [...filtered].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
   return sorted[0] ?? null
 }
 
-export function getPreviousSnapshot(snapshots: PriceSnapshot[]): PriceSnapshot | null {
-  const sorted = [...snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+export function getPreviousSnapshot(snapshots: PriceSnapshot[], source?: string): PriceSnapshot | null {
+  const filtered = source ? snapshots.filter(s => s.source === source) : snapshots
+  const sorted = [...filtered].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
   return sorted[1] ?? null
 }
 
