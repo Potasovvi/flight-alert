@@ -1,7 +1,9 @@
 import { usePrices } from '../hooks/usePrices.js'
 
 import { PriceChart } from './PriceChart.js'
+import { PriceHero } from './PriceHero.js'
 import { DateSearchForm } from './DateSearchForm.js'
+import { getLatestSnapshot, getPreviousSnapshot, getPriceChange } from '../utils/priceTrend.js'
 import type { Flight } from '../types.js'
 
 function getLatestUpdate(snapshots: { timestamp: string }[]): string {
@@ -74,6 +76,8 @@ export function Dashboard() {
   }
 
   const lastUpdate = getLatestUpdate(data.snapshots)
+  const latestSnapshot = getLatestSnapshot(data.snapshots)
+  const previousSnapshot = getPreviousSnapshot(data.snapshots)
 
   return (
     <div style={{
@@ -94,109 +98,12 @@ export function Dashboard() {
         </p>
       </header>
 
-      <DateSearchForm />
-
-      <section style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
-          🌤️ Miglior fascia oraria
-        </h2>
-        <p style={{ fontSize: 13, color: '#64748b', margin: '-8px 0 16px' }}>
-          Date fisse di default: <strong>20 dicembre 2026</strong> (andata) → <strong>6 gennaio 2027</strong> (ritorno)
-        </p>
-        {(() => {
-          const sorted = [...data.snapshots].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-          const latest = sorted[0]
-          if (!latest) return null
-
-          const slots = [
-            { id: 'mattina', label: '🌅 Mattina (6-12)', min: 6, max: 12 },
-            { id: 'pomeriggio', label: '☀️ Pomeriggio (12-18)', min: 12, max: 18 },
-            { id: 'sera', label: '🌙 Sera (18-24)', min: 18, max: 24 },
-          ] as const
-
-          function getHour(time: string): number {
-            const h = parseInt(time.split(':')[0], 10)
-            return isNaN(h) ? -1 : h
-          }
-
-          function bestPerSlot(flights: Flight[]) {
-            return slots.map(slot => {
-              const inSlot = flights.filter(f => {
-                const h = getHour(f.departureTime)
-                return h >= slot.min && h < slot.max
-              })
-              const best = inSlot.length > 0 ? inSlot.reduce((a, b) => a.price < b.price ? a : b) : null
-              return { slot, best }
-            })
-          }
-
-          function cheapestSlot(items: { best: Flight | null }[]): number {
-            let min = Infinity
-            for (const item of items) {
-              if (item.best && item.best.price < min) min = item.best.price
-            }
-            return min
-          }
-
-          const outbound = [...latest.flights].filter(f => f.route === 'TRN→CTA')
-          const ret = [...latest.flights].filter(f => f.route === 'CTA→TRN')
-          const outboundSlots = bestPerSlot(outbound)
-          const returnSlots = bestPerSlot(ret)
-          const cheapestOut = cheapestSlot(outboundSlots)
-          const cheapestRet = cheapestSlot(returnSlots)
-
-          function SlotRow({ item, cheapest }: { item: { slot: { label: string }; best: Flight | null }; cheapest: number }) {
-            const isCheapest = item.best && item.best.price === cheapest
-            return (
-              <div onClick={() => item.best && window.open(item.best.url, '_blank', 'noopener')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 12px',
-                  marginBottom: 4,
-                  borderRadius: 6,
-                  cursor: item.best ? 'pointer' : 'default',
-                  background: isCheapest ? '#f0fdf4' : 'transparent',
-                  border: isCheapest ? '1px solid #bbf7d0' : '1px solid transparent',
-                  transition: 'background 0.1s'
-                }}
-                onMouseOver={e => { if (item.best) e.currentTarget.style.background = isCheapest ? '#dcfce7' : '#f1f5f9' }}
-                onMouseOut={e => { e.currentTarget.style.background = isCheapest ? '#f0fdf4' : 'transparent' }}>
-                <span style={{ fontSize: 14, color: '#334155' }}>{item.slot.label}</span>
-                {item.best ? (
-                  <span style={{ fontSize: 14, fontWeight: isCheapest ? 700 : 500, color: isCheapest ? '#16a34a' : '#2563eb' }}>
-                    {item.best.airline} €{item.best.price} ({item.best.departureTime})
-                    {isCheapest && <span style={{ marginLeft: 8, fontSize: 11, background: '#16a34a', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>PIÙ ECONOMICO</span>}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>—</span>
-                )}
-              </div>
-            )
-          }
-
-          return (
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 280px' }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#2563eb' }}>
-                  ✈️ Andata — Torino → Catania
-                </h3>
-                {outboundSlots.map(item => <SlotRow key={item.slot.id} item={item} cheapest={cheapestOut} />)}
-              </div>
-              <div style={{ flex: '1 1 280px' }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#7c3aed' }}>
-                  🔄 Ritorno — Catania → Torino
-                </h3>
-                {returnSlots.map(item => <SlotRow key={item.slot.id} item={item} cheapest={cheapestRet} />)}
-              </div>
-            </div>
-          )
-        })()}
-        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 12, marginBottom: 0 }}>
-          Basato sull'ultimo rilevamento. I prezzi vengono aggiornati 3 volte al giorno (6:00, 15:00, 21:00).
-        </p>
-      </section>
+      {latestSnapshot && (
+        <PriceHero
+          flights={latestSnapshot.flights}
+          previousFlights={previousSnapshot?.flights ?? []}
+        />
+      )}
 
       <section style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 16px', color: '#0f172a' }}>
@@ -221,7 +128,7 @@ export function Dashboard() {
             .filter(f => f.route === 'CTA→TRN')
             .sort((a, b) => a.price - b.price)
 
-          function FlightTable({ title, flights, color }: { title: string; flights: Flight[]; color: string }) {
+          function FlightTable({ title, flights, color, previousFlights }: { title: string; flights: Flight[]; color: string; previousFlights: Flight[] }) {
             return (
               <div style={{ marginBottom: 24 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color }}>{title}</h3>
@@ -237,22 +144,35 @@ export function Dashboard() {
                           <Th>Partenza</Th>
                           <Th>Arrivo</Th>
                           <Th style={{ textAlign: 'right' }}>Prezzo</Th>
+                          <Th style={{ textAlign: 'center' }}>Trend</Th>
                         </tr>
                       </thead>
                       <tbody>
-                        {flights.map((f, i) => (
-                          <tr key={i}
-                            onClick={() => window.open(f.url, '_blank', 'noopener')}
-                            style={{ cursor: 'pointer', borderBottom: '1px solid #e2e8f0', transition: 'background 0.1s' }}
-                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
-                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                            <Td>{f.airline}</Td>
-                            <Td>{f.date || '—'}</Td>
-                            <Td>{f.departureTime || '—'}</Td>
-                            <Td>{f.arrivalTime || '—'}</Td>
-                            <Td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>€{f.price}</Td>
-                          </tr>
-                        ))}
+                        {flights.map((f, i) => {
+                          const { diff } = getPriceChange(f, previousFlights)
+                          return (
+                            <tr key={i}
+                              onClick={() => window.open(f.url, '_blank', 'noopener')}
+                              style={{ cursor: 'pointer', borderBottom: '1px solid #e2e8f0', transition: 'background 0.1s' }}
+                              onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                              <Td>{f.airline}</Td>
+                              <Td>{f.date || '—'}</Td>
+                              <Td>{f.departureTime || '—'}</Td>
+                              <Td>{f.arrivalTime || '—'}</Td>
+                              <Td style={{ textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>€{f.price}</Td>
+                              <Td style={{ textAlign: 'center' }}>
+                                {diff < 0 ? (
+                                  <span style={{ color: '#16a34a', fontWeight: 600 }}>↓ €{Math.abs(diff)}</span>
+                                ) : diff > 0 ? (
+                                  <span style={{ color: '#dc2626', fontWeight: 600 }}>↑ €{diff}</span>
+                                ) : (
+                                  <span style={{ color: '#94a3b8' }}>—</span>
+                                )}
+                              </Td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -263,8 +183,8 @@ export function Dashboard() {
 
           return (
             <>
-              <FlightTable title="✈️ Andata — Torino → Catania" flights={outbound} color="#2563eb" />
-              <FlightTable title="🔄 Ritorno — Catania → Torino" flights={ret} color="#7c3aed" />
+              <FlightTable title="✈️ Andata — Torino → Catania" flights={outbound} color="#2563eb" previousFlights={previousSnapshot?.flights ?? []} />
+              <FlightTable title="🔄 Ritorno — Catania → Torino" flights={ret} color="#7c3aed" previousFlights={previousSnapshot?.flights ?? []} />
               <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 0, marginBottom: 0 }}>
                 Clicca su una riga per aprire la ricerca su Google Flights
               </p>
@@ -272,6 +192,8 @@ export function Dashboard() {
           )
         })()}
       </section>
+
+      <DateSearchForm />
 
       <footer style={{ marginTop: 48, padding: '16px 0', borderTop: '1px solid #e2e8f0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
         Flight Alert — Prezzi aggiornati 3 volte al giorno (6:00, 15:00, 21:00)

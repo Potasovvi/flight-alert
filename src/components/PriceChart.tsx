@@ -15,10 +15,15 @@ interface ChartDataPoint {
   [airline: string]: string | number
 }
 
-function getMinPricePerDay(history: PriceHistory): ChartDataPoint[] {
+function getMinPricePerDay(history: PriceHistory, days: number): ChartDataPoint[] {
+  const cutoff = days > 0
+    ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+    : ''
+
   const byDay = new Map<string, Map<string, number>>()
 
   for (const snap of history.snapshots) {
+    if (cutoff && snap.timestamp < cutoff) continue
     const day = snap.timestamp.split('T')[0]
     if (!byDay.has(day)) byDay.set(day, new Map())
 
@@ -53,10 +58,11 @@ const COLORS = ['#2563eb', '#16a34a', '#dc2626', '#ca8a04', '#8b5cf6']
 
 interface PriceChartProps {
   history: PriceHistory
+  days?: number
 }
 
-export function PriceChart({ history }: PriceChartProps) {
-  const data = getMinPricePerDay(history)
+export function PriceChart({ history, days = 14 }: PriceChartProps) {
+  const data = getMinPricePerDay(history, days)
 
   if (data.length < 2) {
     return (

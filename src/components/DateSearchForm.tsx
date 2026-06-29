@@ -55,42 +55,44 @@ export function DateSearchForm() {
   const searchCompleted = msg?.type === 'success'
 
   return (
-    <section style={{ marginBottom: 32, padding: 20, background: '#f8fafc', borderRadius: 8 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px', color: '#0f172a' }}>
-        🔍 Cerca voli per data
-      </h3>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Andata *</label>
-          <input type="date" value={departure} onChange={e => setDeparture(e.target.value)} required
-            style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 14 }} />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Ritorno</label>
-          <input type="date" value={returnDate} onChange={e => setReturnDate(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 14 }} />
-        </div>
-        <button type="submit" disabled={loading}
-          style={{ padding: '8px 20px', background: loading ? '#94a3b8' : '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? 'Avvio...' : 'Cerca voli'}
-        </button>
-      </form>
-      {msg && (
-        <p style={{ margin: '12px 0 0', fontSize: 13, color: msg.type === 'success' ? '#16a34a' : '#dc2626' }}>
-          {msg.text}
-        </p>
-      )}
-      {searchCompleted && (
-        <div style={{ marginTop: 12 }}>
-          <button onClick={handleSendTelegram} disabled={telegramLoading}
-            style={{ padding: '8px 20px', background: telegramLoading ? '#94a3b8' : '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: telegramLoading ? 'not-allowed' : 'pointer' }}>
-            {telegramLoading ? 'Invio...' : 'Send to Telegram 📨'}
+    <details style={{ marginTop: 48 }}>
+      <summary style={{ fontSize: 14, color: '#64748b', cursor: 'pointer', userSelect: 'none' }}>
+        🔍 Cerca voli per altre date
+      </summary>
+      <div style={{ marginTop: 12 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Andata *</label>
+            <input type="date" value={departure} onChange={e => setDeparture(e.target.value)} required
+              style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 14 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Ritorno</label>
+            <input type="date" value={returnDate} onChange={e => setReturnDate(e.target.value)}
+              style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 14 }} />
+          </div>
+          <button type="submit" disabled={loading}
+            style={{ padding: '8px 20px', background: loading ? '#94a3b8' : '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            {loading ? 'Avvio...' : 'Cerca voli'}
           </button>
-          {telegramMsg && (
-            <p style={{ margin: '8px 0 0', fontSize: 13, color: '#16a34a' }}>{telegramMsg}</p>
-          )}
-        </div>
-      )}
-    </section>
+        </form>
+        {msg && (
+          <p style={{ margin: '12px 0 0', fontSize: 13, color: msg.type === 'success' ? '#16a34a' : '#dc2626' }}>
+            {msg.text}
+          </p>
+        )}
+        {searchCompleted && (
+          <div style={{ marginTop: 12 }}>
+            <button onClick={handleSendTelegram} disabled={telegramLoading}
+              style={{ padding: '8px 20px', background: telegramLoading ? '#94a3b8' : '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: telegramLoading ? 'not-allowed' : 'pointer' }}>
+              {telegramLoading ? 'Invio...' : 'Invia su Telegram 📨'}
+            </button>
+            {telegramMsg && (
+              <p style={{ margin: '8px 0 0', fontSize: 13, color: '#16a34a' }}>{telegramMsg}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </details>
   )
 }
