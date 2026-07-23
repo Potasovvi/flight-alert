@@ -27670,6 +27670,204 @@
         }
       ],
       "source": "scheduled"
+    },
+    {
+      "timestamp": "2026-07-23T07:25:54.554Z",
+      "flights": [
+        {
+          "airline": "Wizz Air",
+          "departureTime": "14:00",
+          "arrivalTime": "15:55",
+          "duration": "",
+          "stops": 0,
+          "price": 76,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "Wizz Air",
+          "departureTime": "18:50",
+          "arrivalTime": "20:45",
+          "duration": "",
+          "stops": 0,
+          "price": 76,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "Wizz Air",
+          "departureTime": "06:30",
+          "arrivalTime": "08:40",
+          "duration": "",
+          "stops": 0,
+          "price": 76,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Wizz Air",
+          "departureTime": "16:05",
+          "arrivalTime": "18:15",
+          "duration": "",
+          "stops": 0,
+          "price": 100,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "06:00",
+          "arrivalTime": "08:00",
+          "duration": "",
+          "stops": 0,
+          "price": 149,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "15:30",
+          "arrivalTime": "17:30",
+          "duration": "",
+          "stops": 0,
+          "price": 169,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "20:25",
+          "arrivalTime": "22:25",
+          "duration": "",
+          "stops": 0,
+          "price": 182,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "10:50",
+          "arrivalTime": "12:45",
+          "duration": "",
+          "stops": 0,
+          "price": 206,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "08:10",
+          "arrivalTime": "10:05",
+          "duration": "",
+          "stops": 0,
+          "price": 206,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "12:30",
+          "arrivalTime": "14:25",
+          "duration": "",
+          "stops": 0,
+          "price": 206,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "ITA",
+          "departureTime": "11:15",
+          "arrivalTime": "14:40",
+          "duration": "",
+          "stops": 0,
+          "price": 231,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "ITA",
+          "departureTime": "19:15",
+          "arrivalTime": "23:00",
+          "duration": "",
+          "stops": 0,
+          "price": 231,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "ITA",
+          "departureTime": "15:15",
+          "arrivalTime": "18:30",
+          "duration": "",
+          "stops": 0,
+          "price": 244,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "ITA",
+          "departureTime": "10:15",
+          "arrivalTime": "14:30",
+          "duration": "",
+          "stops": 0,
+          "price": 244,
+          "currency": "EUR",
+          "date": "2027-01-06",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+TRN+from+CTA+on+2027-01-06&hl=en&gl=IT&curr=EUR",
+          "route": "CTA→TRN"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "06:00",
+          "arrivalTime": "07:55",
+          "duration": "",
+          "stops": 0,
+          "price": 294,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        },
+        {
+          "airline": "Ryanair",
+          "departureTime": "17:45",
+          "arrivalTime": "19:40",
+          "duration": "",
+          "stops": 0,
+          "price": 294,
+          "currency": "EUR",
+          "date": "2026-12-20",
+          "url": "https://www.google.com/travel/flights?q=Flights+to+CTA+from+TRN+on+2026-12-20&hl=en&gl=IT&curr=EUR",
+          "route": "TRN→CTA"
+        }
+      ],
+      "source": "scheduled"
     }
   ]
 }
